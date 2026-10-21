@@ -18,7 +18,7 @@ export function renderHome(root) {
   const view = el(`
     <main class="page home">
       <header class="topbar">
-        <div class="brand"><img src="/icon.svg" alt="" /><span>Profesor Virtual</span></div>
+        <div class="brand"><img src="./icon.svg" alt="" /><span>Profesor Virtual</span></div>
         <a href="#/settings" class="btn ghost small" aria-label="Ajustes">⚙️ Ajustes</a>
       </header>
 

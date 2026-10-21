@@ -8,7 +8,7 @@ export function renderSetup(root) {
   const view = el(`
     <main class="page setup">
       <section class="hero">
-        <img src="/icon.svg" alt="" class="hero-logo" />
+        <img src="./icon.svg" alt="" class="hero-logo" />
         <h1>Profesor Virtual de Idiomas</h1>
         <p class="lead">Conversa por voz en <b>inglés 🇬🇧</b> o <b>italiano 🇮🇹</b> sobre cualquier tema o profesión.
         Tu profesor te escucha, te responde y <b>corrige tu pronunciación al instante</b>.</p>

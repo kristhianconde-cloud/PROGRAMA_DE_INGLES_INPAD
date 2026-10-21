@@ -43,7 +43,7 @@ export class MicRecorder {
     });
     this.ctx = new (window.AudioContext || window.webkitAudioContext)();
     if (this.ctx.state === 'suspended') await this.ctx.resume();
-    await this.ctx.audioWorklet.addModule('/worklets/pcm-recorder-processor.js');
+    await this.ctx.audioWorklet.addModule('./worklets/pcm-recorder-processor.js');
     this.source = this.ctx.createMediaStreamSource(this.stream);
     this.node = new AudioWorkletNode(this.ctx, 'pcm-recorder-processor');
     this.node.port.onmessage = (e) => {
