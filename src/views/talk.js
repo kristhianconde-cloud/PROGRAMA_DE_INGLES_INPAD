@@ -133,6 +133,8 @@ export function renderTalk(root) {
         </div>
       </section>
 
+      <button class="btn ghost small btn-scroll-bottom" id="btnScrollBottom" hidden>⬇️ Ver lo último</button>
+
       <!-- Barra de controles y texto alternativo -->
       <footer class="talk-footer">
         <form class="text-input-form" id="textInputForm">
@@ -246,6 +248,7 @@ export function renderTalk(root) {
   const correctionsLabel = view.querySelector('#correctionsLabel');
   const correctionsList = view.querySelector('#correctionsList');
   const chatFlow = view.querySelector('#chatFlow');
+  const btnScrollBottom = view.querySelector('#btnScrollBottom');
   const btnMic = view.querySelector('#btnMic');
   const micStatusText = view.querySelector('#micStatusText');
   const btnEnd = view.querySelector('#btnEnd');
@@ -282,6 +285,18 @@ export function renderTalk(root) {
 
   let curUserBubble = null;
   let curTeacherBubble = null;
+  let userIsScrolledUp = false;
+
+  function scrollChatToBottom(force = false) {
+    if (!chatFlow) return;
+    if (force || !userIsScrolledUp) {
+      chatFlow.scrollTo({
+        top: chatFlow.scrollHeight,
+        behavior: 'smooth'
+      });
+      if (btnScrollBottom) btnScrollBottom.hidden = true;
+    }
+  }
 
   function updateStatus(state, msg) {
     statusDot.className = `status-indicator ${state}`;
@@ -337,7 +352,7 @@ export function renderTalk(root) {
           curUserBubble.textContent = prev + ' ' + text.trim();
         }
       }
-      chatFlow.scrollTop = chatFlow.scrollHeight;
+      scrollChatToBottom();
     } else if (role === 'teacher') {
       if (!curTeacherBubble) {
         const wrap = el(`<div class="msg teacher"><div class="bubble"></div></div>`);
@@ -350,7 +365,7 @@ export function renderTalk(root) {
           curTeacherBubble.textContent = prev + ' ' + text.trim();
         }
       }
-      chatFlow.scrollTop = chatFlow.scrollHeight;
+      scrollChatToBottom();
     }
   }
 
@@ -676,11 +691,25 @@ export function renderTalk(root) {
     finalizeTurn('user');
     updateTranscript('user', val);
     finalizeTurn('user');
+    scrollChatToBottom(true);
 
     client.sendText(val);
     txtUserMessage.value = '';
     lblTeacherStatus.textContent = 'Tu profesora está procesando tu respuesta...';
     startSilenceWatchdog();
+  });
+
+  chatFlow?.addEventListener('scroll', () => {
+    const distFromBottom = chatFlow.scrollHeight - chatFlow.scrollTop - chatFlow.clientHeight;
+    userIsScrolledUp = distFromBottom > 80;
+    if (btnScrollBottom) {
+      btnScrollBottom.hidden = !userIsScrolledUp;
+    }
+  });
+
+  btnScrollBottom?.addEventListener('click', () => {
+    userIsScrolledUp = false;
+    scrollChatToBottom(true);
   });
 
   btnNudgeExplain?.addEventListener('click', (e) => {
