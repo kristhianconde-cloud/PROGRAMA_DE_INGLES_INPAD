@@ -148,11 +148,6 @@ export function renderAuth(root) {
             <button type="submit" class="btn primary big w-full">Enviar enlace de recuperación 📩</button>
           </form>
         </div>
-
-        <div class="card-footer-actions">
-          <button type="button" class="btn ghost small muted" id="btnSetupModal">⚙️ Configuración del Profesor</button>
-          <a href="#/setup" class="link-btn small muted">Ingreso con clave de Gemini</a>
-        </div>
       </section>
 
       <!-- MODAL DE CONFIGURACIÓN FIREBASE & CLAVE INSTITUCIONAL -->
