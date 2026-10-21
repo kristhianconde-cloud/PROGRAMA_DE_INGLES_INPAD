@@ -51,11 +51,16 @@ describe('Profesor Virtual Prompts & Tools', () => {
     expect(decl.parameters.required).toEqual(['type', 'said', 'correct', 'explanation']);
   });
 
-  it('declares the report_placement_result tool and generates placement prompt', () => {
+  it('declares the report_placement_result tool and generates exhaustive multi-stage placement prompt', () => {
     const prompt = buildPlacementPrompt({ language: 'en', studentName: 'Kristhian' });
     expect(prompt).toContain('Emma');
-    expect(prompt).toContain('ORAL PLACEMENT TEST');
+    expect(prompt).toContain('EXHAUSTIVE, MULTI-STAGE ORAL PLACEMENT TEST');
     expect(prompt).toContain('Kristhian');
+    expect(prompt).toContain('DO NOT ask basic introductory questions like "What is your name?"');
+    expect(prompt).toContain('TIER 1: DESCRIPTIVE ROUTINE');
+    expect(prompt).toContain('TIER 2: NARRATIVE & PAST EXPERIENCES');
+    expect(prompt).toContain('TIER 3: SITUATIONAL PROBLEM-SOLVING');
+    expect(prompt).toContain('TIER 4: CRITICAL ANALYSIS');
     expect(prompt).toContain('report_placement_result');
 
     expect(PLACEMENT_TOOL.functionDeclarations.length).toBeGreaterThanOrEqual(1);

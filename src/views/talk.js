@@ -452,7 +452,7 @@ export function renderTalk(root) {
       if (isPlacement) {
         prompt = buildPlacementPrompt({ language: pending.language, studentName });
         tools = PLACEMENT_TOOL;
-        startSignal = '[DIAGNOSTIC_START: Start the diagnostic interview in Spanish with a warm welcome and explain the friendly purpose, as described in instructions]';
+        startSignal = '[DIAGNOSTIC_START: Inicia la evaluación diagnóstica exhaustiva saludando en español por su nombre como se indica, y procede con la pregunta sustancial del Tier 1]';
       } else if (isExam) {
         prompt = buildLevelExamPrompt({
           language: pending.language,
