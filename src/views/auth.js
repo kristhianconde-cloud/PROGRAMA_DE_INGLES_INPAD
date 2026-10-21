@@ -38,15 +38,15 @@ export function renderAuth(root) {
         ` : ''}
 
         <div class="auth-tabs" ${!firebaseReady ? 'style="opacity: 0.5; pointer-events: none;"' : ''}>
-          <button type="button" class="auth-tab ${activeTab === 'login' ? 'active' : ''}" data-tab="login">Iniciar Sesión</button>
-          <button type="button" class="auth-tab ${activeTab === 'register' ? 'active' : ''}" data-tab="register">Crear Cuenta</button>
+          <button type="button" class="auth-tab active" data-tab="login">Iniciar Sesión</button>
+          <button type="button" class="auth-tab" data-tab="register">Crear Cuenta</button>
         </div>
 
         <div class="auth-content" ${!firebaseReady ? 'style="opacity: 0.5; pointer-events: none;"' : ''}>
-          <!-- FORMULARIO DE INICIO DE SESIÓN -->
-          <form class="auth-form" id="loginForm" ${activeTab !== 'login' ? 'hidden' : ''}>
+          <!-- FORMULARIO 1: INICIO DE SESIÓN -->
+          <form class="auth-form" id="loginForm">
             <div class="field">
-              <label for="loginEmail">Correo electrónico del alumno</label>
+              <label for="loginEmail">Correo electrónico</label>
               <input id="loginEmail" type="email" placeholder="ejemplo@gmail.com" required autocomplete="username" />
             </div>
 
@@ -67,7 +67,7 @@ export function renderAuth(root) {
 
             <div class="auth-divider"><span>o también</span></div>
 
-            <button type="button" class="btn secondary big w-full" id="btnGoogleLogin">
+            <button type="button" class="btn secondary big w-full btn-google" id="btnGoogleLogin">
               <svg width="18" height="18" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -76,10 +76,15 @@ export function renderAuth(root) {
               </svg>
               Continuar con Google
             </button>
+
+            <div class="auth-switch-text">
+              <span class="muted small">¿Aún no tienes cuenta?</span>
+              <button type="button" class="link-btn small" id="btnSwitchToReg"><b>Regístrate aquí</b></button>
+            </div>
           </form>
 
-          <!-- FORMULARIO DE REGISTRO -->
-          <form class="auth-form" id="registerForm" ${activeTab !== 'register' ? 'hidden' : ''}>
+          <!-- FORMULARIO 2: CREACIÓN DE CUENTA -->
+          <form class="auth-form" id="registerForm" style="display: none;">
             <div class="field">
               <label for="regName">Tu nombre completo</label>
               <input id="regName" type="text" placeholder="Ej.: Juan Pérez" required autocomplete="name" />
@@ -106,14 +111,31 @@ export function renderAuth(root) {
             <p class="error auth-error" hidden></p>
 
             <button type="submit" class="btn primary big w-full">Crear mi cuenta de alumno 🎓</button>
+
+            <div class="auth-divider"><span>o también</span></div>
+
+            <button type="button" class="btn secondary big w-full btn-google" id="btnGoogleReg">
+              <svg width="18" height="18" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              Registrarme con Google
+            </button>
+
+            <div class="auth-switch-text">
+              <span class="muted small">¿Ya tienes cuenta?</span>
+              <button type="button" class="link-btn small" id="btnSwitchToLogin"><b>Inicia sesión aquí</b></button>
+            </div>
           </form>
 
-          <!-- FORMULARIO DE RECUPERAR CONTRASEÑA -->
-          <form class="auth-form" id="forgotForm" ${activeTab !== 'forgot' ? 'hidden' : ''}>
+          <!-- FORMULARIO 3: RECUPERAR CONTRASEÑA -->
+          <form class="auth-form" id="forgotForm" style="display: none;">
             <div class="forgot-header">
               <button type="button" class="link-btn" id="btnBackToLogin">← Volver al inicio de sesión</button>
-              <h3>Restablecer contraseña</h3>
-              <p class="muted small">Escribe el correo con el que te registraste y te enviaremos un enlace seguro para crear una nueva contraseña.</p>
+              <h3 style="margin-top: 8px;">Restablecer contraseña</h3>
+              <p class="muted small">Escribe tu correo registrado y te enviaremos un enlace para crear una nueva clave.</p>
             </div>
 
             <div class="field">
@@ -129,7 +151,7 @@ export function renderAuth(root) {
 
         <div class="card-footer-actions">
           <button type="button" class="btn ghost small muted" id="btnSetupModal">⚙️ Configuración del Profesor</button>
-          <a href="#/setup" class="link-btn small muted">Ingreso con API Key de Gemini</a>
+          <a href="#/setup" class="link-btn small muted">Ingreso con clave de Gemini</a>
         </div>
       </section>
 
@@ -147,8 +169,8 @@ export function renderAuth(root) {
             </div>
 
             <div class="field">
-              <label for="txtInstitutionalKey"><b>2. Clave Gemini del Profesor / Institucional (Opcional)</b></label>
-              <p class="muted small" style="margin-bottom: 6px;">Si colocas tu clave aquí, <b>ningún alumno tendrá que poner clave de Gemini</b>. La aplicación usará tu autorización central.</p>
+              <label for="txtInstitutionalKey"><b>2. Clave Gemini del Profesor / Institucional</b></label>
+              <p class="muted small" style="margin-bottom: 6px;">Al estar configurada, los alumnos usan tu autorización centralizada automáticamente.</p>
               <input id="txtInstitutionalKey" type="password" placeholder="AIzaSy..." value="${esc(getInstitutionalGeminiKey())}" />
             </div>
 
@@ -188,9 +210,31 @@ export function renderAuth(root) {
   function setTab(tab) {
     activeTab = tab;
     tabs.forEach((t) => t.classList.toggle('active', t.dataset.tab === tab));
-    loginForm.hidden = tab !== 'login';
-    registerForm.hidden = tab !== 'register';
-    forgotForm.hidden = tab !== 'forgot';
+
+    // Control estricto de visibilidad independiente
+    if (tab === 'login') {
+      loginForm.style.display = 'flex';
+      loginForm.hidden = false;
+      registerForm.style.display = 'none';
+      registerForm.hidden = true;
+      forgotForm.style.display = 'none';
+      forgotForm.hidden = true;
+    } else if (tab === 'register') {
+      loginForm.style.display = 'none';
+      loginForm.hidden = true;
+      registerForm.style.display = 'flex';
+      registerForm.hidden = false;
+      forgotForm.style.display = 'none';
+      forgotForm.hidden = true;
+    } else if (tab === 'forgot') {
+      loginForm.style.display = 'none';
+      loginForm.hidden = true;
+      registerForm.style.display = 'none';
+      registerForm.hidden = true;
+      forgotForm.style.display = 'flex';
+      forgotForm.hidden = false;
+    }
+
     view.querySelectorAll('.auth-error').forEach((e) => (e.hidden = true));
   }
 
@@ -198,6 +242,9 @@ export function renderAuth(root) {
     tabBtn.addEventListener('click', () => setTab(tabBtn.dataset.tab));
   });
 
+  // Botones de enlace cruzado
+  view.querySelector('#btnSwitchToReg')?.addEventListener('click', () => setTab('register'));
+  view.querySelector('#btnSwitchToLogin')?.addEventListener('click', () => setTab('login'));
   view.querySelector('#btnGoForgot')?.addEventListener('click', () => setTab('forgot'));
   view.querySelector('#btnBackToLogin')?.addEventListener('click', () => setTab('login'));
 
@@ -276,10 +323,9 @@ export function renderAuth(root) {
     }
   });
 
-  // Envío Google Login
-  view.querySelector('#btnGoogleLogin')?.addEventListener('click', async () => {
-    const btn = view.querySelector('#btnGoogleLogin');
-    const err = loginForm.querySelector('.auth-error');
+  // Login y Registro con Google
+  const handleGoogle = async (btn) => {
+    const err = (activeTab === 'register' ? registerForm : loginForm).querySelector('.auth-error');
     err.hidden = true;
     btn.disabled = true;
 
@@ -296,7 +342,10 @@ export function renderAuth(root) {
     } finally {
       btn.disabled = false;
     }
-  });
+  };
+
+  view.querySelector('#btnGoogleLogin')?.addEventListener('click', (e) => handleGoogle(e.currentTarget));
+  view.querySelector('#btnGoogleReg')?.addEventListener('click', (e) => handleGoogle(e.currentTarget));
 
   // Envío Recuperar Contraseña
   forgotForm.addEventListener('submit', async (e) => {
@@ -311,7 +360,7 @@ export function renderAuth(root) {
 
     try {
       await sendPasswordReset(email);
-      toast('¡Listo! Revisa tu bandeja de correo (o spam) para restablecer tu contraseña 📩');
+      toast('¡Listo! Revisa tu correo para restablecer tu contraseña 📩');
       setTab('login');
     } catch (error) {
       err.textContent = getFriendlyAuthError(error);
@@ -346,21 +395,17 @@ export function renderAuth(root) {
     }
 
     try {
-      // Permitir copiar y pegar formato objeto JS o JSON
       let parsed = null;
       if (rawText.startsWith('{')) {
-        // Puede tener comillas o claves directas
         try {
           parsed = JSON.parse(rawText);
         } catch {
-          // Evaluar de forma segura
           const sanitized = rawText
             .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":')
             .replace(/'/g, '"');
           parsed = JSON.parse(sanitized);
         }
       } else if (rawText.includes('apiKey:')) {
-        // Si pegaron `const firebaseConfig = { ... }`
         const match = rawText.match(/\{[\s\S]*\}/);
         if (match) {
           const sanitized = match[0]
@@ -376,7 +421,7 @@ export function renderAuth(root) {
 
       saveFirebaseConfig(parsed);
       saveInstitutionalGeminiKey(instKey);
-      toast('¡Firebase configurado exitosamente! 🎉');
+      toast('¡Configuración guardada exitosamente! 🎉');
       closeModal();
       location.reload();
     } catch (err) {
@@ -384,6 +429,9 @@ export function renderAuth(root) {
       modalError.hidden = false;
     }
   });
+
+  // Iniciar en tab de login con control estricto de visibilidad
+  setTab('login');
 
   root.appendChild(view);
 }

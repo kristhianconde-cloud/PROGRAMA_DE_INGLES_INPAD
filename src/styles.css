@@ -872,6 +872,20 @@ input:focus, textarea:focus, select:focus {
   gap: 16px;
 }
 
+.auth-form[hidden],
+[hidden] {
+  display: none !important;
+}
+
+.auth-switch-text {
+  text-align: center;
+  padding: 8px 0 2px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
 .field {
   display: flex;
   flex-direction: column;
