@@ -64,6 +64,10 @@ export function renderHome(root) {
         <div class="selection muted small"></div>
         <button class="btn primary big start" disabled>🎙️ Empezar conversación</button>
       </div>
+
+      <footer class="app-credits">
+        <p class="small muted">Creado por el <b>Ing. Comercial Kristhian Conde Zegarra</b> con soporte de IA</p>
+      </footer>
     </main>
   `);
 

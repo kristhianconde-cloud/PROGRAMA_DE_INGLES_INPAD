@@ -37,6 +37,10 @@ export function renderSetup(root) {
         <p class="note">🔒 Tu clave se guarda <b>solo en este dispositivo</b>. Nadie más la ve.
         Aviso: en el plan gratuito, Google puede usar las conversaciones para mejorar sus modelos; evita compartir datos personales sensibles.</p>
       </section>
+
+      <footer class="app-credits">
+        <p class="small muted">Creado por el <b>Ing. Comercial Kristhian Conde Zegarra</b> con soporte de IA</p>
+      </footer>
     </main>
   `);
 

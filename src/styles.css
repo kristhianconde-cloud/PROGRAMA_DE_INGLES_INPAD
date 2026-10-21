@@ -802,6 +802,15 @@ input:focus, textarea:focus, select:focus {
   to { opacity: 1; transform: translateX(0); }
 }
 
+.app-credits {
+  text-align: center;
+  padding: 24px 10px 14px;
+  color: var(--text-muted);
+}
+.app-credits b {
+  color: var(--text-main);
+}
+
 @media (max-width: 600px) {
   .start-bar {
     flex-direction: column;
@@ -811,3 +820,4 @@ input:focus, textarea:focus, select:focus {
     grid-template-columns: 1fr;
   }
 }
+
