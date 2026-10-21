@@ -14,6 +14,16 @@ import {
 const FB_CONFIG_KEY = 'pvi.firebase_config';
 const SHARED_GEMINI_KEY = 'pvi.institutional_gemini_key';
 
+const DEFAULT_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBF7oKFgPaQPfwi6RwH72CLGLGzcInAaks",
+  authDomain: "programa-inpad-idiomas.firebaseapp.com",
+  projectId: "programa-inpad-idiomas",
+  storageBucket: "programa-inpad-idiomas.firebasestorage.app",
+  messagingSenderId: "344073247026",
+  appId: "1:344073247026:web:55af2da20d246256dc9f2b",
+  measurementId: "G-01QKH9ET6M"
+};
+
 /**
  * Configuración por defecto o cargada desde entorno / localStorage.
  */
@@ -23,7 +33,6 @@ export function getFirebaseConfig() {
     if (saved) return JSON.parse(saved);
   } catch {}
 
-  // Si está definida por variables de entorno de Vite:
   if (import.meta.env.VITE_FIREBASE_API_KEY) {
     return {
       apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -34,7 +43,7 @@ export function getFirebaseConfig() {
       appId: import.meta.env.VITE_FIREBASE_APP_ID,
     };
   }
-  return null;
+  return DEFAULT_FIREBASE_CONFIG;
 }
 
 export function saveFirebaseConfig(config) {
