@@ -1,0 +1,17 @@
+{
+  "name": "profesor-virtual-idiomas",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Profesor virtual de idiomas (inglés e italiano) que conversa por voz en tiempo real y corrige pronunciación y gramática.",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview --host",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0",
+    "vitest": "^3.0.0"
+  }
+}
