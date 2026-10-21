@@ -980,18 +980,44 @@ input:focus, textarea:focus, select:focus {
 }
 
 /* Modales */
-.modal {
+dialog.modal {
+  display: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  max-width: none;
+  max-height: none;
+}
+dialog.modal[open] {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+  margin: 0;
+}
+dialog.modal:not([open]) {
+  display: none !important;
+}
+
+div.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 16px;
 }
-.modal[hidden] {
+div.modal[hidden] {
   display: none !important;
 }
 .modal-card {
