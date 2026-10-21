@@ -2,12 +2,22 @@ import { getSettings, saveSettings, VOICES } from '../lib/storage.js';
 import { CORRECTION_MODES } from '../prompts/teacher.js';
 import { validateApiKey } from '../live/liveClient.js';
 import { el, esc, toast } from '../lib/ui.js';
+import {
+  getCurrentUser,
+  logoutUser,
+  getInstitutionalGeminiKey,
+  saveInstitutionalGeminiKey,
+  isFirebaseReady,
+} from '../lib/firebase.js';
 
 /**
- * Pantalla de Ajustes: clave de API, voz, modo de corrección e idioma de explicaciones.
+ * Pantalla de Ajustes: clave de API, cuenta de alumno, voz, modo de corrección e idioma.
  */
 export function renderSettings(root) {
   const s = getSettings();
+  const user = getCurrentUser();
+  const instKey = getInstitutionalGeminiKey();
+  const fbReady = isFirebaseReady();
 
   const view = el(`
     <main class="page settings">
@@ -18,10 +28,35 @@ export function renderSettings(root) {
 
       <form class="settings-form card">
         <section class="settings-group">
+          <h2>👤 Cuenta de Alumno</h2>
+          ${user ? `
+            <div class="user-badge" style="font-size: 0.95rem; padding: 8px 14px;">
+              <span class="user-avatar" style="width: 28px; height: 28px;">${esc((user.displayName || user.email || 'A')[0].toUpperCase())}</span>
+              <div>
+                <b>${esc(user.displayName || 'Alumno')}</b>
+                <div class="muted small">${esc(user.email || '')}</div>
+              </div>
+            </div>
+            <div style="margin-top: 10px;">
+              <button type="button" class="btn secondary small" id="btnLogoutSettings">🚪 Cerrar Sesión</button>
+            </div>
+          ` : `
+            <p class="muted small">No has iniciado sesión en Firebase.</p>
+            <a href="#/auth" class="btn primary small" style="margin-top: 6px;">Iniciar sesión o Registrarme</a>
+          `}
+        </section>
+
+        <section class="settings-group">
           <h2>🔑 Clave de Gemini API</h2>
-          <p class="muted small">Tu clave gratuita de Google AI Studio. Se guarda solo en este navegador.</p>
+          ${instKey ? `
+            <div class="banner" style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); padding: 10px; border-radius: var(--radius-sm); margin-bottom: 8px;">
+              <span style="color: var(--success); font-weight: 600;">✨ Clave Institucional Activa</span>
+              <p class="muted small">La app está autorizada por tu profesor. No necesitas ingresar clave personal a menos que desees usar la tuya propia.</p>
+            </div>
+          ` : ''}
+          <p class="muted small">Tu clave de Google AI Studio (opcional si tu institución te brinda el acceso):</p>
           <div class="key-row">
-            <input id="setKey" type="password" value="${esc(s.apiKey)}" required />
+            <input id="setKey" type="password" value="${esc(s.apiKey)}" placeholder="${instKey ? 'Usando clave institucional central' : 'AIzaSy...'}" />
             <button type="button" class="btn ghost small" id="btnToggleKey">👁️</button>
           </div>
           <button type="button" class="btn secondary small" id="btnTestKey">Verificar clave</button>
@@ -30,7 +65,7 @@ export function renderSettings(root) {
 
         <section class="settings-group">
           <h2>👤 Tu Nombre</h2>
-          <input id="setName" type="text" maxlength="40" placeholder="Ej.: Carlos" value="${esc(s.studentName)}" />
+          <input id="setName" type="text" maxlength="40" placeholder="Ej.: Carlos" value="${esc(s.studentName || user?.displayName || '')}" />
         </section>
 
         <section class="settings-group">
@@ -77,6 +112,10 @@ export function renderSettings(root) {
           <button type="submit" class="btn primary big">Guardar cambios</button>
         </div>
       </form>
+
+      <footer class="app-credits">
+        <p class="small muted">Creado por el <b>Ing. Comercial Kristhian Conde Zegarra</b> con soporte de IA</p>
+      </footer>
     </main>
   `);
 
@@ -87,12 +126,18 @@ export function renderSettings(root) {
   const form = view.querySelector('.settings-form');
   const btnClear = view.querySelector('#btnClearHistory');
 
+  view.querySelector('#btnLogoutSettings')?.addEventListener('click', async () => {
+    await logoutUser();
+    toast('Sesión cerrada correctamente');
+    location.hash = '#/auth';
+  });
+
   btnToggle.addEventListener('click', () => {
     keyInput.type = keyInput.type === 'password' ? 'text' : 'password';
   });
 
   btnTest.addEventListener('click', async () => {
-    const key = keyInput.value.trim();
+    const key = keyInput.value.trim() || instKey;
     if (!key) {
       txtTest.textContent = 'Ingresa una clave primero.';
       return;
@@ -102,7 +147,7 @@ export function renderSettings(root) {
     const res = await validateApiKey(key);
     btnTest.disabled = false;
     if (res.ok) {
-      txtTest.textContent = '✅ Clave válida';
+      txtTest.textContent = '✅ Clave válida y lista';
       txtTest.style.color = '#10b981';
     } else {
       txtTest.textContent = `❌ ${res.message}`;

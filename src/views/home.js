@@ -3,10 +3,13 @@ import { LANGUAGES, LEVELS } from '../prompts/teacher.js';
 import { CATEGORIES, TOPICS } from '../data/topics.js';
 import { el, esc } from '../lib/ui.js';
 import { session } from '../state.js';
+import { getCurrentUser, logoutUser } from '../lib/firebase.js';
 
 /** Inicio: elegir idioma, nivel y tema. */
 export function renderHome(root) {
   const s = getSettings();
+  const user = getCurrentUser();
+  const studentDisplayName = user?.displayName || s.studentName || (user?.email ? user.email.split('@')[0] : '');
   let language = s.language;
   let level = s.level;
   let category = 'trabajo';
@@ -19,11 +22,20 @@ export function renderHome(root) {
     <main class="page home">
       <header class="topbar">
         <div class="brand"><img src="./icon.svg" alt="" /><span>Profesor Virtual</span></div>
-        <a href="#/settings" class="btn ghost small" aria-label="Ajustes">⚙️ Ajustes</a>
+        <div class="topbar-actions" style="display: flex; align-items: center; gap: 8px;">
+          ${user ? `
+            <div class="user-badge" title="${esc(user.email || '')}">
+              <span class="user-avatar">${esc((studentDisplayName || 'A')[0].toUpperCase())}</span>
+              <span>${esc(studentDisplayName)}</span>
+            </div>
+            <button type="button" class="btn ghost small" id="btnLogout" title="Cerrar sesión">🚪</button>
+          ` : ''}
+          <a href="#/settings" class="btn ghost small" aria-label="Ajustes">⚙️ Ajustes</a>
+        </div>
       </header>
 
       <section class="greeting">
-        <h1>${s.studentName ? `¡Hola, ${esc(s.studentName)}! 👋` : '¡Hola! 👋'}</h1>
+        <h1>${studentDisplayName ? `¡Hola, ${esc(studentDisplayName)}! 👋` : '¡Hola! 👋'}</h1>
         <p class="muted">¿Sobre qué quieres conversar hoy?</p>
         ${history.length ? `<p class="stats-mini">🗣️ ${history.length} conversaciones · ⏱️ ${totalMin} min practicados</p>` : ''}
       </section>
@@ -126,6 +138,11 @@ export function renderHome(root) {
       customTopic: custom.value.trim(),
     };
     location.hash = '#/talk';
+  });
+
+  view.querySelector('#btnLogout')?.addEventListener('click', async () => {
+    await logoutUser();
+    location.hash = '#/auth';
   });
 
   refresh();

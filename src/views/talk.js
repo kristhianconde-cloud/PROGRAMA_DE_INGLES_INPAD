@@ -5,6 +5,7 @@ import { LiveClient } from '../live/liveClient.js';
 import { MicRecorder, PcmPlayer } from '../live/audio.js';
 import { el, esc, formatDuration, toast, highlight } from '../lib/ui.js';
 import { session } from '../state.js';
+import { getInstitutionalGeminiKey, getCurrentUser } from '../lib/firebase.js';
 
 /**
  * Sala de conversación por voz con el profesor virtual.
@@ -276,10 +277,18 @@ export function renderTalk(root) {
       player = new PcmPlayer(24000);
       await player.init();
 
+      const effectiveKey = s.apiKey || getInstitutionalGeminiKey();
+      if (!effectiveKey) {
+        throw new Error('No hay clave de Gemini configurada. Por favor configúrala en Ajustes o contacta a tu profesor.');
+      }
+
       client = new LiveClient({
-        apiKey: s.apiKey,
+        apiKey: effectiveKey,
         model: s.model || 'gemini-3.8-live'
       });
+
+      const user = getCurrentUser();
+      const studentName = user?.displayName || s.studentName || (user?.email ? user.email.split('@')[0] : '');
 
       // Configuración del profesor
       const prompt = buildTeacherPrompt({
@@ -289,7 +298,7 @@ export function renderTalk(root) {
         customTopic: pending.customTopic,
         correctionMode: s.correctionMode,
         explainIn: s.explainIn,
-        studentName: s.studentName,
+        studentName,
         wordsToPractice: wordsToPractice(pending.language)
       });
 
