@@ -1,11 +1,20 @@
-import { getSettings, wordsToPractice, addSession, saveDiagnosedLevel } from '../lib/storage.js';
+import {
+  getSettings,
+  wordsToPractice,
+  addSession,
+  saveDiagnosedLevel,
+  saveLevelExamResult,
+} from '../lib/storage.js';
 import { getTopic } from '../data/topics.js';
 import {
   LANGUAGES,
   buildTeacherPrompt,
   buildPlacementPrompt,
+  buildLevelExamPrompt,
   CORRECTION_TOOL,
   PLACEMENT_TOOL,
+  LEVEL_EXAM_TOOL,
+  getLevelTitle,
   helpMessage,
 } from '../prompts/teacher.js';
 import { LiveClient } from '../live/liveClient.js';
@@ -15,7 +24,7 @@ import { session } from '../state.js';
 import { getInstitutionalGeminiKey, getCurrentUser } from '../lib/firebase.js';
 
 /**
- * Sala de conversación por voz con el profesor virtual (o Test de Diagnóstico).
+ * Sala de conversación por voz con el profesor virtual, Test de Diagnóstico o Examen de Nivel.
  */
 export function renderTalk(root) {
   const pending = session.pending;
@@ -27,10 +36,19 @@ export function renderTalk(root) {
   const s = getSettings();
   const lang = LANGUAGES[pending.language];
   const isPlacement = pending.mode === 'placement' || pending.level === 'auto';
+  const isExam = pending.mode === 'exam';
+
   const topic = pending.topicId ? getTopic(pending.topicId) : null;
-  const topicTitle = isPlacement
-    ? '🎯 Test de Diagnóstico Oral'
-    : (pending.customTopic ? pending.customTopic : (topic ? topic.title : 'Conversación libre'));
+  let topicTitle = 'Conversación libre';
+  if (isPlacement) {
+    topicTitle = '🎯 Test de Diagnóstico Oral';
+  } else if (isExam) {
+    topicTitle = `🎓 Examen: ${getLevelTitle(pending.currentLevel)} ➔ ${getLevelTitle(pending.targetLevel)}`;
+  } else if (pending.customTopic) {
+    topicTitle = pending.customTopic;
+  } else if (topic) {
+    topicTitle = topic.title;
+  }
 
   let client = null;
   let recorder = null;
@@ -42,11 +60,23 @@ export function renderTalk(root) {
   let micActive = true;
   let isConnecting = true;
   let placementResultData = null;
+  let examResultData = null;
 
   // Estado de la sesión actual
   const transcriptHistory = []; // { role: 'user' | 'teacher', text: '', partial: boolean }
   const corrections = []; // { id, type, said, correct, explanation, phonetic, timestamp }
   const vocabLearned = new Set();
+
+  let subtitleText = `${lang.flag} ${lang.nameEs} · Profe ${lang.teacherName} · <span id="timerText">00:00</span>`;
+  if (isPlacement) {
+    subtitleText = `${lang.flag} ${lang.nameEs} · Evaluación de Nivel · <span id="timerText">00:00</span>`;
+  } else if (isExam) {
+    subtitleText = `${lang.flag} ${lang.nameEs} · Examen de Ascenso (Mínimo 15/20) · <span id="timerText">00:00</span>`;
+  }
+
+  let statusInitialText = 'Conectando con tu profesora...';
+  if (isPlacement) statusInitialText = 'Iniciando tu test de nivelación...';
+  if (isExam) statusInitialText = 'Tu examinadora iniciará la evaluación...';
 
   const view = el(`
     <main class="page talk">
@@ -55,10 +85,10 @@ export function renderTalk(root) {
           <div class="status-indicator connecting" id="statusDot"></div>
           <div>
             <h1 class="talk-title">${esc(topicTitle)}</h1>
-            <p class="muted small">${lang.flag} ${lang.nameEs} · ${isPlacement ? 'Evaluación de Nivel' : `Profe ${lang.teacherName}`} · <span id="timerText">00:00</span></p>
+            <p class="muted small">${subtitleText}</p>
           </div>
         </div>
-        <button class="btn danger small" id="btnEnd">${isPlacement ? 'Finalizar test' : 'Finalizar'}</button>
+        <button class="btn danger small" id="btnEnd">${isPlacement || isExam ? 'Finalizar evaluación' : 'Finalizar'}</button>
       </header>
 
       <!-- Avatar animado del profesor e indicador de voz -->
@@ -70,7 +100,7 @@ export function renderTalk(root) {
             <span class="avatar-emoji">👩‍🏫</span>
           </div>
         </div>
-        <p class="teacher-status muted small" id="lblTeacherStatus">${isPlacement ? 'Iniciando tu test de nivelación...' : 'Conectando con tu profesora...'}</p>
+        <p class="teacher-status muted small" id="lblTeacherStatus">${statusInitialText}</p>
       </section>
 
       <!-- Tarjetas de corrección en vivo -->
@@ -92,7 +122,7 @@ export function renderTalk(root) {
       <!-- Área de subtítulos y transcripción en tiempo real -->
       <section class="chat-flow" id="chatFlow">
         <div class="empty-state muted">
-          <p>${isPlacement ? 'La profesora te dará la bienvenida en español para conocer tu nivel inicial.' : 'La conversación aparecerá aquí a medida que hablen.'}</p>
+          <p>${isPlacement ? 'La profesora te agradecerá y dará la bienvenida en español.' : (isExam ? 'La examinadora presentará el escenario de evaluación.' : 'La conversación aparecerá aquí a medida que hablen.')}</p>
         </div>
       </section>
 
@@ -124,7 +154,7 @@ export function renderTalk(root) {
         </div>
       </footer>
 
-      <!-- Modal de fin de sesión / reporte de conversación normal -->
+      <!-- Modal 1: Fin de sesión normal -->
       <dialog class="modal" id="endModal">
         <div class="modal-card">
           <h2>🎉 ¡Gran práctica!</h2>
@@ -153,7 +183,7 @@ export function renderTalk(root) {
         </div>
       </dialog>
 
-      <!-- Modal de resultado oficial del Test de Diagnóstico -->
+      <!-- Modal 2: Certificado de Diagnóstico de Nivel -->
       <dialog class="modal" id="placementModal">
         <div class="modal-card placement-card">
           <div style="text-align: center; margin-bottom: 6px;">
@@ -177,6 +207,27 @@ export function renderTalk(root) {
           </div>
         </div>
       </dialog>
+
+      <!-- Modal 3: Resultado de Examen de Ascenso de Nivel (Mínimo 15/20) -->
+      <dialog class="modal" id="examModal">
+        <div class="modal-card exam-card">
+          <div style="text-align: center; margin-bottom: 6px;">
+            <span style="font-size: 2.6rem;" id="txtExamEmoji">🎓</span>
+            <h2 id="txtExamTitle" style="margin-top: 4px;">Resultado del Examen</h2>
+            <p class="muted small" id="txtExamSubtitle">Evaluación oficial en escala vigesimal (0 a 20)</p>
+          </div>
+
+          <div class="placement-badge-box">
+            <span class="placement-badge" id="txtExamScoreBadge">Nota: 16 / 20</span>
+          </div>
+
+          <div class="placement-info" id="examInfoContent"></div>
+
+          <div class="modal-actions" style="margin-top: 14px;">
+            <button class="btn primary big w-full" id="btnExitExam">Continuar</button>
+          </div>
+        </div>
+      </dialog>
     </main>
   `);
 
@@ -193,6 +244,7 @@ export function renderTalk(root) {
   const btnEnd = view.querySelector('#btnEnd');
   const endModal = view.querySelector('#endModal');
   const placementModal = view.querySelector('#placementModal');
+  const examModal = view.querySelector('#examModal');
   const silenceNudge = view.querySelector('#silenceNudge');
   const btnNudgeExplain = view.querySelector('#btnNudgeExplain');
 
@@ -324,7 +376,55 @@ export function renderTalk(root) {
       suggBox.innerHTML = '';
     }
 
-    placementModal.showModal();
+    if (!placementModal.open) {
+      placementModal.showModal();
+    }
+  }
+
+  function showExamModal(res) {
+    examResultData = res;
+    const passed = res.passed || res.score >= 15;
+    const emoji = view.querySelector('#txtExamEmoji');
+    const title = view.querySelector('#txtExamTitle');
+    const subtitle = view.querySelector('#txtExamSubtitle');
+    const scoreBadge = view.querySelector('#txtExamScoreBadge');
+    const infoContent = view.querySelector('#examInfoContent');
+    const btnExit = view.querySelector('#btnExitExam');
+
+    if (passed) {
+      emoji.textContent = '🎉';
+      title.textContent = '¡Felicitaciones! Has Aprobado';
+      subtitle.textContent = `Asciendes oficialmente a ${res.targetLevelTitle || res.targetLevel}`;
+      scoreBadge.className = 'placement-badge score-passed';
+      scoreBadge.textContent = `Nota: ${res.score} / 20 · ¡APROBADO!`;
+      btnExit.textContent = `Empezar mis clases en ${res.targetLevelTitle || res.targetLevel} 🚀`;
+    } else {
+      emoji.textContent = '📚';
+      title.textContent = 'Buen esfuerzo · Por mejorar';
+      subtitle.textContent = `Para ascender necesitas una nota mínima de 15/20`;
+      scoreBadge.className = 'placement-badge score-failed';
+      scoreBadge.textContent = `Nota: ${res.score} / 20 · No alcanzado`;
+      btnExit.textContent = `Continuar practicando en ${getLevelTitle(pending.currentLevel)}`;
+    }
+
+    const rubric = res.rubric || {};
+    infoContent.innerHTML = `
+      <p style="font-size: 0.95rem; line-height: 1.5; margin-bottom: 8px;">${esc(res.feedback || '')}</p>
+      
+      <div class="rubric-grid">
+        <div class="rubric-item"><span class="muted small">Fluidez</span><b>${rubric.fluency || 0}/5</b></div>
+        <div class="rubric-item"><span class="muted small">Gramática</span><b>${rubric.grammar || 0}/5</b></div>
+        <div class="rubric-item"><span class="muted small">Pronunciación</span><b>${rubric.pronunciation || 0}/5</b></div>
+        <div class="rubric-item"><span class="muted small">Vocabulario</span><b>${rubric.vocabulary || 0}/5</b></div>
+      </div>
+
+      ${res.strengths?.length ? `<div style="margin-top: 8px;"><b>💪 Fortalezas:</b><ul>${res.strengths.map((s) => `<li>${esc(s)}</li>`).join('')}</ul></div>` : ''}
+      ${res.areasToImprove?.length ? `<div style="margin-top: 8px;"><b>🎯 Puntos a reforzar:</b><ul>${res.areasToImprove.map((s) => `<li>${esc(s)}</li>`).join('')}</ul></div>` : ''}
+    `;
+
+    if (!examModal.open) {
+      examModal.showModal();
+    }
   }
 
   async function startSession() {
@@ -345,26 +445,49 @@ export function renderTalk(root) {
       const user = getCurrentUser();
       const studentName = user?.displayName || s.studentName || (user?.email ? user.email.split('@')[0] : '');
 
-      // Configuración de prompt según modo
-      const prompt = isPlacement
-        ? buildPlacementPrompt({ language: pending.language, studentName })
-        : buildTeacherPrompt({
-            language: pending.language,
-            level: pending.level,
-            topic,
-            customTopic: pending.customTopic,
-            correctionMode: s.correctionMode,
-            explainIn: s.explainIn,
-            studentName,
-            wordsToPractice: wordsToPractice(pending.language)
-          });
+      let prompt;
+      let tools;
+      let startSignal;
+
+      if (isPlacement) {
+        prompt = buildPlacementPrompt({ language: pending.language, studentName });
+        tools = PLACEMENT_TOOL;
+        startSignal = '[DIAGNOSTIC_START: Start the diagnostic interview in Spanish with a warm welcome and explain the friendly purpose, as described in instructions]';
+      } else if (isExam) {
+        prompt = buildLevelExamPrompt({
+          language: pending.language,
+          currentLevel: pending.currentLevel,
+          targetLevel: pending.targetLevel,
+          studentName,
+          scenario: pending.scenario,
+        });
+        tools = LEVEL_EXAM_TOOL;
+        startSignal = '[EXAM_START: Inicia el examen formal explicando el escenario de evaluación en español e inglés]';
+      } else {
+        prompt = buildTeacherPrompt({
+          language: pending.language,
+          level: pending.level,
+          topic,
+          customTopic: pending.customTopic,
+          correctionMode: s.correctionMode,
+          explainIn: s.explainIn,
+          studentName,
+          wordsToPractice: wordsToPractice(pending.language)
+        });
+        tools = CORRECTION_TOOL;
+        startSignal = '[SESSION_START: Say hello briefly in character and ask the first open question]';
+      }
 
       // Eventos del cliente Live
       client.addEventListener('ready', () => {
         isConnecting = false;
-        updateStatus('connected', isPlacement ? 'La profesora iniciará tu diagnóstico...' : 'Tu profesora está escuchando. ¡Habla!');
+        let readyStatus = 'Tu profesora está escuchando. ¡Habla!';
+        if (isPlacement) readyStatus = 'Iniciando tu test de diagnóstico...';
+        if (isExam) readyStatus = 'Iniciando tu examen de nivel...';
+
+        updateStatus('connected', readyStatus);
         chatFlow.innerHTML = '';
-        toast(isPlacement ? 'Iniciando test de diagnóstico oral' : 'Conectado con tu profesora virtual', 'success');
+        toast(isPlacement ? 'Iniciando test de diagnóstico' : (isExam ? 'Iniciando examen de nivel' : 'Conectado con tu profesora virtual'), 'success');
 
         // Iniciar cronómetro
         timerId = setInterval(() => {
@@ -372,17 +495,14 @@ export function renderTalk(root) {
           timerText.textContent = formatDuration(seconds);
         }, 1000);
 
-        const startMsg = isPlacement
-          ? '[DIAGNOSTIC_START: Start the diagnostic interview in Spanish with a warm welcome and explain the friendly purpose, as described in instructions]'
-          : '[SESSION_START: Say hello briefly in character and ask the first open question]';
-        client.sendText(startMsg);
+        client.sendText(startSignal);
       });
 
       client.addEventListener('audio', (e) => {
         if (e.detail?.data) {
           player.play(e.detail.data);
           avatarBox.classList.add('speaking');
-          lblTeacherStatus.textContent = 'Tu profesora está hablando...';
+          lblTeacherStatus.textContent = isExam ? 'Tu examinadora está hablando...' : 'Tu profesora está hablando...';
         }
       });
 
@@ -415,13 +535,30 @@ export function renderTalk(root) {
         appendCorrectionCard(e.detail);
       });
 
+      // Cierre sincronizado del Diagnóstico: la profesora habla primero y luego se abre el modal
       client.addEventListener('placement-result', (e) => {
         saveDiagnosedLevel(e.detail);
-        setTimeout(() => {
-          if (!placementModal.open) {
+        const checkDoneSpeaking = () => {
+          if (!player || !player.isPlaying) {
             showPlacementModal(e.detail);
+          } else {
+            setTimeout(checkDoneSpeaking, 500);
           }
-        }, 3500);
+        };
+        setTimeout(checkDoneSpeaking, 6500);
+      });
+
+      // Cierre sincronizado del Examen de Nivel: la profesora anuncia la nota por voz y luego se abre el modal
+      client.addEventListener('level-exam-result', (e) => {
+        saveLevelExamResult(e.detail);
+        const checkDoneSpeaking = () => {
+          if (!player || !player.isPlaying) {
+            showExamModal(e.detail);
+          } else {
+            setTimeout(checkDoneSpeaking, 500);
+          }
+        };
+        setTimeout(checkDoneSpeaking, 6500);
       });
 
       client.addEventListener('reconnecting', () => {
@@ -448,7 +585,7 @@ export function renderTalk(root) {
       await client.connect({
         systemInstruction: prompt,
         voiceName: s.voice || 'Kore',
-        tools: isPlacement ? PLACEMENT_TOOL : CORRECTION_TOOL
+        tools
       });
 
       // Micrófono
@@ -580,6 +717,19 @@ export function renderTalk(root) {
       };
       saveDiagnosedLevel(defaultDiagnostic);
       showPlacementModal(defaultDiagnostic);
+    } else if (isExam) {
+      const defaultExam = examResultData || {
+        score: 14,
+        passed: false,
+        targetLevel: pending.targetLevel,
+        targetLevelTitle: getLevelTitle(pending.targetLevel),
+        rubric: { fluency: 3, grammar: 4, pronunciation: 3, vocabulary: 4 },
+        feedback: 'Examen completado parcialmente. Sigue practicando las conversaciones de tu nivel actual.',
+        strengths: ['Participación activa en el diálogo'],
+        areasToImprove: ['Mayor fluidez en la respuesta y conectores']
+      };
+      saveLevelExamResult(defaultExam);
+      showExamModal(defaultExam);
     } else {
       view.querySelector('#statDuration').textContent = formatDuration(seconds);
       view.querySelector('#statCorrections').textContent = String(corrections.length);
@@ -617,6 +767,12 @@ export function renderTalk(root) {
     placementModal.close();
     session.pending = null;
     toast('¡Nivel fijado con éxito! Tus clases ahora se adaptarán a este nivel', 'success');
+    location.hash = '#/home';
+  });
+
+  view.querySelector('#btnExitExam').addEventListener('click', () => {
+    examModal.close();
+    session.pending = null;
     location.hash = '#/home';
   });
 

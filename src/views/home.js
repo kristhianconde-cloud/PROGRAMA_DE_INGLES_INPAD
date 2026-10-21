@@ -1,5 +1,5 @@
-import { getSettings, saveSettings, getHistory } from '../lib/storage.js';
-import { LANGUAGES, LEVELS } from '../prompts/teacher.js';
+import { getSettings, saveSettings, getHistory, getLastExamResult } from '../lib/storage.js';
+import { LANGUAGES, LEVELS, getNextLevel, getLevelTitle, getRandomExamScenario } from '../prompts/teacher.js';
 import { CATEGORIES, TOPICS } from '../data/topics.js';
 import { el, esc } from '../lib/ui.js';
 import { session } from '../state.js';
@@ -17,6 +17,7 @@ export function renderHome(root) {
 
   const history = getHistory();
   const totalMin = Math.round(history.reduce((a, h) => a + (h.durationSec || 0), 0) / 60);
+  const lastExam = getLastExamResult();
 
   const view = el(`
     <main class="page home">
@@ -52,13 +53,13 @@ export function renderHome(root) {
         </div>
       </section>
 
-      <section class="block">
+      <section class="block" id="secLevel">
         <h2 class="block-title">2. Tu nivel</h2>
         ${s.diagnosedLevel ? `
           <div class="diagnosed-badge-banner">
             <span class="badge-icon">🏅</span>
             <div style="flex: 1;">
-              <b>Tu nivel diagnosticado: ${esc(s.diagnosedFeedback?.levelTitle || s.diagnosedLevel)}</b>
+              <b>Tu nivel diagnosticado: ${esc(s.diagnosedFeedback?.levelTitle || getLevelTitle(s.diagnosedLevel))}</b>
               <p class="muted small">Tus clases se adaptan automáticamente a este ritmo.</p>
             </div>
             <button type="button" class="btn ghost small" id="btnRetakePlacement">Reevaluar nivel ↺</button>
@@ -71,6 +72,8 @@ export function renderHome(root) {
         <div class="chips levels">
           ${LEVELS.map((lv) => `<button class="chip" data-level="${lv.id}">${lv.label}</button>`).join('')}
         </div>
+
+        <div id="boxLevelExamContainer"></div>
       </section>
 
       <section class="block" id="secTopics">
@@ -101,6 +104,7 @@ export function renderHome(root) {
   const startBtn = view.querySelector('.start');
   const selection = view.querySelector('.selection');
   const secTopics = view.querySelector('#secTopics');
+  const examContainer = view.querySelector('#boxLevelExamContainer');
 
   function renderTopics() {
     topicsBox.innerHTML = TOPICS.filter((t) => t.cat === category).map((t) => `
@@ -110,17 +114,58 @@ export function renderHome(root) {
       </button>`).join('');
   }
 
+  function renderExamBox() {
+    const nextLevel = getNextLevel(level);
+    if (!nextLevel || level === 'auto') {
+      examContainer.innerHTML = '';
+      return;
+    }
+
+    const nextTitle = getLevelTitle(nextLevel);
+    const currTitle = getLevelTitle(level);
+    const hasFailedAttempt = lastExam && !lastExam.passed && lastExam.targetLevel === nextLevel;
+
+    examContainer.innerHTML = `
+      <div class="level-exam-box">
+        <div>
+          <h3>🎓 Examen de Ascenso a ${esc(nextTitle)}</h3>
+          <p class="muted small">
+            ${hasFailedAttempt ? `
+              Último intento: <b style="color: #f59e0b;">${lastExam.score}/20</b>. Necesitas mínimo 15 para ascender. ¡Rinde un nuevo examen con una situación diferente!
+            ` : `
+              Supera la nota mínima de <b>15 sobre 20</b> en un examen oral dinámico para subir oficialmente de nivel.
+            `}
+          </p>
+        </div>
+        <button type="button" class="btn primary small" id="btnTakeExam">Rendir Examen 🎓</button>
+      </div>
+    `;
+
+    examContainer.querySelector('#btnTakeExam')?.addEventListener('click', () => {
+      saveSettings({ language, level });
+      const scenario = getRandomExamScenario(level, nextLevel, lastExam?.scenario?.id);
+      session.pending = {
+        language,
+        mode: 'exam',
+        currentLevel: level,
+        targetLevel: nextLevel,
+        scenario,
+      };
+      location.hash = '#/talk';
+    });
+  }
+
   function refresh() {
     view.querySelectorAll('.lang-card').forEach((b) => b.classList.toggle('active', b.dataset.lang === language));
     view.querySelectorAll('[data-level]').forEach((b) => b.classList.toggle('active', b.dataset.level === level));
     view.querySelectorAll('[data-cat]').forEach((b) => b.classList.toggle('active', b.dataset.cat === category));
     renderTopics();
+    renderExamBox();
 
     const lang = LANGUAGES[language];
     const isPlacement = level === 'auto';
 
     if (isPlacement) {
-      // Modo diagnóstico
       startBtn.disabled = false;
       startBtn.innerHTML = '🎯 Empezar Test de Diagnóstico';
       selection.innerHTML = `🎯 <b>Test de Diagnóstico Oral:</b> Conversación guiada de 2-3 min con Profe ${lang.teacherName} para fijar tu nivel.`;

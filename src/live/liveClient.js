@@ -144,6 +144,8 @@ export class LiveClient extends EventTarget {
           this.emit('correction', fc.args || {});
         } else if (fc.name === 'report_placement_result') {
           this.emit('placement-result', fc.args || {});
+        } else if (fc.name === 'report_level_exam') {
+          this.emit('level-exam-result', fc.args || {});
         }
         responses.push({ id: fc.id, name: fc.name, response: { result: 'ok' } });
       }

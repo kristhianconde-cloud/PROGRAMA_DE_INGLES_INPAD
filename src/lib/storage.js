@@ -51,6 +51,43 @@ export function saveDiagnosedLevel(result) {
   });
 }
 
+const EXAM_HISTORY_KEY = 'pvi.exam_history';
+
+export function getExamHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(EXAM_HISTORY_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+export function getLastExamResult() {
+  return getSettings().lastExamResult || null;
+}
+
+export function saveLevelExamResult(result) {
+  const history = getExamHistory();
+  const record = {
+    ...result,
+    date: new Date().toISOString(),
+    id: 'exam_' + Date.now(),
+  };
+  history.unshift(record);
+  localStorage.setItem(EXAM_HISTORY_KEY, JSON.stringify(history.slice(0, 50)));
+
+  const patch = {
+    lastExamResult: record,
+  };
+
+  // Si aprobó con 15 o más, asciende automáticamente al nivel meta
+  if (result.passed && result.targetLevel) {
+    patch.level = result.targetLevel;
+    patch.diagnosedLevel = result.targetLevel;
+  }
+
+  return saveSettings(patch);
+}
+
 export function getHistory() {
   try {
     return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');

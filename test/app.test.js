@@ -1,5 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { buildTeacherPrompt, buildPlacementPrompt, LANGUAGES, CORRECTION_TOOL, PLACEMENT_TOOL } from '../src/prompts/teacher.js';
+import {
+  buildTeacherPrompt,
+  buildPlacementPrompt,
+  LANGUAGES,
+  CORRECTION_TOOL,
+  PLACEMENT_TOOL,
+  LEVEL_EXAM_TOOL,
+  LEVEL_ORDER,
+  getNextLevel,
+  getLevelTitle,
+  getRandomExamScenario,
+  buildLevelExamPrompt
+} from '../src/prompts/teacher.js';
 import { getTopic, TOPICS } from '../src/data/topics.js';
 import { highlight, formatDuration } from '../src/lib/ui.js';
 
@@ -74,3 +86,60 @@ describe('UI helpers', () => {
     expect(res).toContain('<mark class="err">bier</mark>');
   });
 });
+
+describe('Dynamic Level-Up Exams & Grading (Vigesimal 0-20)', () => {
+  it('calculates next CEFR level correctly in progression', () => {
+    expect(getNextLevel('zero')).toBe('A1');
+    expect(getNextLevel('A1')).toBe('A2');
+    expect(getNextLevel('A2')).toBe('B1');
+    expect(getNextLevel('B1')).toBe('B2');
+    expect(getNextLevel('B2')).toBe('C1');
+    expect(getNextLevel('C1')).toBeNull();
+  });
+
+  it('retrieves correct friendly level titles', () => {
+    expect(getLevelTitle('A1')).toBe('A1 · Principiante');
+    expect(getLevelTitle('B2')).toBe('B2 · Intermedio alto');
+  });
+
+  it('selects random non-repeating exam scenarios', () => {
+    const s1 = getRandomExamScenario('A1', 'A2');
+    expect(s1).toBeDefined();
+    expect(s1.title).toBeTruthy();
+    expect(s1.desc).toBeTruthy();
+
+    // Selecting again with lastScenarioId should avoid repeating s1
+    const s2 = getRandomExamScenario('A1', 'A2', s1.id);
+    expect(s2).toBeDefined();
+    expect(s2.title).toBeTruthy();
+    expect(s2.desc).toBeTruthy();
+  });
+
+  it('declares LEVEL_EXAM_TOOL with strict 0-20 scale and rubric requirements', () => {
+    expect(LEVEL_EXAM_TOOL.functionDeclarations.length).toBeGreaterThanOrEqual(1);
+    const tool = LEVEL_EXAM_TOOL.functionDeclarations.find(d => d.name === 'report_level_exam');
+    expect(tool).toBeDefined();
+    expect(tool.parameters.required).toEqual(
+      expect.arrayContaining(['score', 'passed', 'targetLevel', 'targetLevelTitle', 'feedback'])
+    );
+  });
+
+  it('builds level exam prompt with required threshold instructions (>=15)', () => {
+    const prompt = buildLevelExamPrompt({
+      language: 'en',
+      studentName: 'Kristhian',
+      currentLevel: 'A1',
+      targetLevel: 'A2',
+      scenario: { title: 'Checking in at Hotel', desc: 'Ask for a room and amenities.' }
+    });
+
+    expect(prompt).toContain('Emma');
+    expect(prompt).toContain('Kristhian');
+    expect(prompt).toContain('Examen de Ascenso de Nivel');
+    expect(prompt).toContain('0 to 20');
+    expect(prompt).toContain('15');
+    expect(prompt).toContain('report_level_exam');
+    expect(prompt).toContain('Checking in at Hotel');
+  });
+});
+

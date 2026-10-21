@@ -257,18 +257,204 @@ DO NOT intimidate or speak too fast. The student must feel safe and encouraged.
 
 # HOW TO CONCLUDE (CRITICAL)
 - After 3 to 5 student turns, you will have enough evidence to diagnose their level.
-- CALL the tool report_placement_result with:
+- FIRST, say aloud warmly in Spanish:
+  "Muchas gracias por realizar el diagnóstico, ${name}. En un momento sabremos tu nivel oficial..."
+- THEN call the tool report_placement_result with:
   * level: 'zero' | 'A1' | 'A2' | 'B1' | 'B2' | 'C1'
-  * levelTitle: e.g. "A1 · Principiante", "A2 · Básico", "B1 · Intermedio", etc.
+  * levelTitle: e.g. "🌱 Desde cero (A0)", "A1 · Principiante", "A2 · Básico", "B1 · Intermedio", etc.
   * rationale: An encouraging summary in Spanish explaining their level.
   * strengths: 2-3 positive points.
   * suggestions: 2-3 focus areas for upcoming classes.
-- SIMULTANEOUSLY say warmly in Spanish aloud:
-  "¡Excelente trabajo, ${name}! Hemos completado tu diagnóstico con éxito. Según nuestra conversación, tu nivel actual es [levelTitle]. He configurado tu perfil con este nivel para que todas tus próximas clases se adapten exactamente a tu ritmo. ¡Nos vemos en tu primera clase!"
+- AND immediately continue speaking in Spanish to conclude:
+  "Según nuestra conversación, tu nivel actual es [levelTitle]. He guardado tu nivel en tu perfil para que todas tus próximas clases se adapten exactamente a tu ritmo. ¡Nos vemos en tu primera clase!"
 - After announcing this, stop asking questions. The test is finished.
 
 # TONE & STYLE
 Extremely encouraging, patient, warm, and professional. Spoken audio format (no markdown, no bullets in speech).`;
+}
+
+/** Orden oficial de progresión de niveles */
+export const LEVEL_ORDER = ['zero', 'A1', 'A2', 'B1', 'B2', 'C1'];
+
+export function getNextLevel(currentLevel) {
+  const idx = LEVEL_ORDER.indexOf(currentLevel);
+  if (idx === -1 || idx >= LEVEL_ORDER.length - 1) return null;
+  return LEVEL_ORDER[idx + 1];
+}
+
+export function getLevelTitle(levelId) {
+  const map = {
+    zero: '🌱 Desde cero (A0)',
+    A1: 'A1 · Principiante',
+    A2: 'A2 · Básico',
+    B1: 'B1 · Intermedio',
+    B2: 'B2 · Intermedio alto',
+    C1: 'C1 · Avanzado',
+  };
+  return map[levelId] || levelId;
+}
+
+/**
+ * BANCO DE ESCENARIOS DINÁMICOS PARA EXÁMENES (NUNCA IGUALES)
+ */
+export const EXAM_SCENARIOS = {
+  zero_to_A1: [
+    { id: 'z1', title: 'Presentación en un evento', desc: 'Saludar, decir tu nombre, de dónde eres y qué profesión o actividad realizas.' },
+    { id: 'z2', title: 'En el café o restaurante', desc: 'Saludar al mesero, pedir algo simple de comer o beber y agradecer.' },
+    { id: 'z3', title: 'Llegada al hotel', desc: 'Presentarte en recepción, deletrear tu nombre y pedir tu llave.' },
+    { id: 'z4', title: 'Conocer a un colega', desc: 'Romper el hielo con un nuevo compañero de clase o trabajo compartiendo gustos básicos.' }
+  ],
+  A1_to_A2: [
+    { id: 'a1_1', title: 'Fin de semana y planes', desc: 'Explicar qué hiciste el fin de semana pasado y qué te gustaría hacer el próximo.' },
+    { id: 'a1_2', title: 'Tu rutina laboral o académica', desc: 'Describir a qué hora comienzas, tus responsabilidades diarias y tus compañeros.' },
+    { id: 'a1_3', title: 'Consulta de salud o farmacia', desc: 'Explicar síntomas sencillos como dolor de cabeza o cansancio y pedir una recomendación.' },
+    { id: 'a1_4', title: 'Tu ciudad y lugares favoritos', desc: 'Describir cómo es tu ciudad, cómo te trasladas y qué lugares recomiendas visitar.' }
+  ],
+  A2_to_B1: [
+    { id: 'a2_1', title: 'Resolución de un reclamo de viaje', desc: 'Explicar un problema con un vuelo o equipaje retrasado y acordar una solución.' },
+    { id: 'a2_2', title: 'Entrevista sobre experiencia previa', desc: 'Detallar una experiencia laboral o proyecto pasado que haya sido un desafío.' },
+    { id: 'a2_3', title: 'Planificación de un evento corporativo', desc: 'Proponer fecha, lugar y actividades justificando tu elección con conectores.' },
+    { id: 'a2_4', title: 'Una anécdota inolvidable', desc: 'Narrar un viaje o experiencia personal conectando causas y consecuencias.' }
+  ],
+  B1_to_B2: [
+    { id: 'b1_1', title: 'Presentación y defensa de un proyecto', desc: 'Presentar una propuesta ante un cliente o directivo respondiendo a objeciones.' },
+    { id: 'b1_2', title: 'Manejo de una crisis de equipo', desc: 'Analizar un conflicto de trabajo o plazo vencido y proponer un plan de acción.' },
+    { id: 'b1_3', title: 'Debate sobre trabajo remoto vs presencial', desc: 'Argumentar ventajas, desventajas y dar tu punto de vista con lenguaje matizado.' },
+    { id: 'b1_4', title: 'Impacto de la inteligencia artificial', desc: 'Expresar tu opinión sobre el futuro del empleo y los cambios tecnológicos.' }
+  ],
+  B2_to_C1: [
+    { id: 'b2_1', title: 'Negociación estratégica internacional', desc: 'Liderar una negociación de contrato discutiendo riesgos, términos y concesiones.' },
+    { id: 'b2_2', title: 'Análisis de liderazgo y cultura organizacional', desc: 'Debatir estrategias de gestión de talento y visión corporativa a largo plazo.' }
+  ]
+};
+
+/**
+ * Selecciona un escenario aleatorio garantizando que no se repita con el último intento.
+ */
+export function getRandomExamScenario(currentLevel, targetLevel, lastScenarioId = null) {
+  const key = `${currentLevel}_to_${targetLevel}`;
+  const list = EXAM_SCENARIOS[key] || EXAM_SCENARIOS['A1_to_A2'];
+  const candidates = list.filter((s) => s.id !== lastScenarioId);
+  const pool = candidates.length > 0 ? candidates : list;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+/** Herramienta oficial para emitir la calificación del examen de nivel (escala vigesimal 0-20) */
+export const LEVEL_EXAM_TOOL = {
+  functionDeclarations: [
+    {
+      name: 'report_level_exam',
+      description: 'Emits the final grade for the oral level-up exam on a 0-20 scale. Passing score is 15 or higher.',
+      parameters: {
+        type: 'OBJECT',
+        properties: {
+          score: {
+            type: 'INTEGER',
+            description: 'The final grade between 0 and 20. Strict passing grade is 15 or above.'
+          },
+          passed: {
+            type: 'BOOLEAN',
+            description: 'True if score >= 15, false if score < 15.'
+          },
+          targetLevel: {
+            type: 'STRING',
+            description: 'The target level evaluated, e.g. A2, B1, etc.'
+          },
+          targetLevelTitle: {
+            type: 'STRING',
+            description: 'The human-readable title of the target level in Spanish.'
+          },
+          rubric: {
+            type: 'OBJECT',
+            properties: {
+              fluency: { type: 'INTEGER', description: 'Score 0 to 5 for natural flow, pauses, and response time.' },
+              grammar: { type: 'INTEGER', description: 'Score 0 to 5 for sentence structure and verb tenses.' },
+              pronunciation: { type: 'INTEGER', description: 'Score 0 to 5 for clarity, phonemes, and intonation.' },
+              vocabulary: { type: 'INTEGER', description: 'Score 0 to 5 for word choice, range, and precision.' },
+            },
+            required: ['fluency', 'grammar', 'pronunciation', 'vocabulary']
+          },
+          feedback: {
+            type: 'STRING',
+            description: 'Detailed, constructive evaluation in Spanish (max 50 words).'
+          },
+          strengths: {
+            type: 'ARRAY',
+            items: { type: 'STRING' },
+            description: '2-3 specific things the student did well during the exam.'
+          },
+          areasToImprove: {
+            type: 'ARRAY',
+            items: { type: 'STRING' },
+            description: '2-3 areas or grammar/vocabulary topics the student needs to reinforce.'
+          }
+        },
+        required: ['score', 'passed', 'targetLevel', 'targetLevelTitle', 'feedback']
+      }
+    },
+    CORRECTION_TOOL.functionDeclarations[0]
+  ]
+};
+
+/**
+ * Prompt para el Examen Oral Dinámico de Ascenso de Nivel (Escala 0 a 20 · Mínimo 15).
+ */
+export function buildLevelExamPrompt(opts) {
+  const lang = LANGUAGES[opts.language || 'en'];
+  const name = opts.studentName ? opts.studentName.trim() : 'alumno';
+  const curr = opts.currentLevel || 'A1';
+  const target = opts.targetLevel || getNextLevel(curr) || 'A2';
+  const currTitle = getLevelTitle(curr);
+  const targetTitle = getLevelTitle(target);
+  const scenario = opts.scenario || { title: 'Conversación de evaluación', desc: 'Preguntas representativas del nivel' };
+
+  return `You are ${lang.teacherName}, a distinguished, fair and supportive ${lang.name} examiner conducting the OFFICIAL LEVEL-UP ORAL EXAM (Examen de Ascenso de Nivel) for ${name}.
+
+# EXAM PARAMETERS
+- CURRENT LEVEL: ${currTitle} (${curr})
+- TARGET LEVEL: ${targetTitle} (${target})
+- GRADING SCALE: 0 to 20 (Peruvian/Latin American vigesimal grading system).
+- PASSING CRITERIA: A score of 15 OR HIGHER is STRICTLY REQUIRED to pass and level up. If the score is 14 or lower, the student does NOT pass and must continue practicing at ${currTitle}.
+- UNIQUE DYNAMIC SCENARIO (Never repeated):
+  * Topic: "${scenario.title}"
+  * Context: "${scenario.desc}"
+
+# STRUCTURE OF THE EXAM (4 PHASES)
+
+1. WELCOME IN SPANISH:
+   Start warmly in Spanish:
+   "¡Bienvenido/a a tu Examen de Ascenso a ${targetTitle}, ${name}! Soy tu profesora ${lang.teacherName}. Hoy evaluaremos tu nivel en una situación sobre '${scenario.title}'. Recuerda que para aprobar y subir de nivel necesitas una nota mínima de 15 sobre 20. ¡Tómalo con calma y da lo mejor de ti! ¿Comenzamos?"
+   Wait for their response.
+
+2. EXAMINATION QUESTIONS (IN ${lang.name}):
+   Conduct the exam strictly inside the assigned scenario ("${scenario.title}").
+   Ask 3 to 4 sequential, probing questions:
+   - Question 1: Icebreaker in the scenario (basic interaction).
+   - Question 2: Narrative or description of routine/past related to the scenario.
+   - Question 3: Problem solving or handling an unexpected detail in the scenario.
+   - Question 4: Expressing personal view, comparison or preference.
+
+3. EVALUATION RUBRIC (Sum of 4 criteria = Score out of 20):
+   - Fluency (0 to 5 pts): Pace, confidence, hesitations.
+   - Grammar (0 to 5 pts): Correct use of tenses required for ${target}.
+   - Pronunciation (0 to 5 pts): Comprehensibility, clear phonemes.
+   - Vocabulary (0 to 5 pts): Appropriate vocabulary for "${scenario.title}" and ${target}.
+   Calculate the TOTAL SCORE = Fluency + Grammar + Pronunciation + Vocabulary (0 to 20).
+   Set passed = (TOTAL SCORE >= 15).
+
+4. HOW TO CONCLUDE (MANDATORY SPEECH SEQUENCE):
+   - FIRST, say aloud in Spanish:
+     "Muchas gracias por rendir tu examen, ${name}. En un momento procesaré tu calificación..."
+   - THEN CALL the tool report_level_exam with score, passed, rubric, feedback, strengths, and areasToImprove.
+   - FINALLY announce their score and result aloud in Spanish:
+     * IF PASSED (Score >= 15):
+       "¡Felicitaciones ${name}! Has obtenido una nota de [SCORE] sobre 20. ¡Has aprobado el examen con éxito y asciendes oficialmente al nivel ${targetTitle}! Tu progreso está guardado y tus próximas clases serán en este nuevo nivel. ¡Excelente trabajo!"
+     * IF NOT PASSED (Score < 15):
+       "Buen esfuerzo, ${name}. Tu nota final ha sido de [SCORE] sobre 20. Para subir a ${targetTitle} requerimos un mínimo de 15. Te recomiendo reforzar [AREAS_TO_IMPROVE]. Continuarás practicando en tu nivel actual y muy pronto podrás rendir un nuevo examen con una situación diferente. ¡Ánimo!"
+   - After this announcement, stop speaking and conclude.
+
+# STYLE
+Professional examiner: encouraging yet objective. Spoken audio format only.`;
 }
 
 /** Mensaje de ayuda que envían los botones de la sala de conversación. */
