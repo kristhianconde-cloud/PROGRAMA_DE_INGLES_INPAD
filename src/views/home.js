@@ -1,5 +1,5 @@
 import { getSettings, saveSettings, getHistory, getLastExamResult, getHighestUnlockedLevel, isLevelUnlocked } from '../lib/storage.js';
-import { LANGUAGES, LEVELS, LEVEL_ORDER, STUDY_PLAN, LEVEL_LESSONS, getNextLevel, getLevelTitle, getRandomExamScenario } from '../prompts/teacher.js';
+import { LANGUAGES, LEVELS, LEVEL_ORDER, STUDY_PLAN, LEVEL_LESSONS, LEVEL_VOCABULARY, getLevelVocabulary, getNextLevel, getLevelTitle, getRandomExamScenario } from '../prompts/teacher.js';
 import { CATEGORIES, TOPICS } from '../data/topics.js';
 import { el, esc } from '../lib/ui.js';
 import { session } from '../state.js';
@@ -12,6 +12,7 @@ export function renderHome(root) {
   const studentDisplayName = user?.displayName || s.studentName || (user?.email ? user.email.split('@')[0] : '');
   let language = s.language;
   let level = s.level || 'auto';
+  let lessonFilterTab = 'all';
 
   // Si el nivel guardado estuviera bloqueado, asegurar que inicie en el nivel más alto desbloqueado
   if (!isLevelUnlocked(level)) {
@@ -123,13 +124,31 @@ export function renderHome(root) {
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
             <div>
               <h2 style="margin: 0; font-size: 1.25rem;">📚 Plan de Estudio Oficial (CEFR)</h2>
-              <p class="muted small" style="margin: 2px 0 0;">Progresión académica desde cero hasta el nivel avanzado</p>
+              <p class="muted small" style="margin: 2px 0 0;">Progresión académica desde cero hasta el nivel avanzado (15 Clases por Nivel)</p>
             </div>
             <button type="button" class="btn ghost small" id="btnCloseStudyPlan" style="font-size: 1.2rem; line-height: 1;">✕</button>
           </div>
           <div class="study-plan-list" id="studyPlanContainer"></div>
           <div class="modal-actions" style="margin-top: 14px;">
             <button class="btn primary w-full" id="btnOkStudyPlan">Entendido</button>
+          </div>
+        </div>
+      </dialog>
+
+      <!-- Modal: Vocabulario Oficial del Nivel -->
+      <dialog class="modal" id="modalLevelVocabulary">
+        <div class="modal-card vocab-modal-card">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <div>
+              <h2 style="margin: 0; font-size: 1.25rem;" id="txtVocabModalTitle">📚 Vocabulario Oficial</h2>
+              <p class="muted small" style="margin: 2px 0 0;">Palabras clave, pronunciación y oraciones de ejemplo</p>
+            </div>
+            <button type="button" class="btn ghost small" id="btnCloseVocabModal" style="font-size: 1.2rem; line-height: 1;">✕</button>
+          </div>
+          <div class="vocab-categories-container" id="vocabCategoriesContainer"></div>
+          <div class="modal-actions" style="margin-top: 14px; display: flex; gap: 8px;">
+            <button class="btn primary w-full" id="btnVocabModalPracticeVoice">🎙️ Practicar Pronunciación con Profesora</button>
+            <button class="btn ghost" id="btnOkVocabModal">Cerrar</button>
           </div>
         </div>
       </dialog>
@@ -160,6 +179,13 @@ export function renderHome(root) {
   const btnCloseStudyPlan = view.querySelector('#btnCloseStudyPlan');
   const btnOkStudyPlan = view.querySelector('#btnOkStudyPlan');
 
+  const modalLevelVocabulary = view.querySelector('#modalLevelVocabulary');
+  const txtVocabModalTitle = view.querySelector('#txtVocabModalTitle');
+  const vocabCategoriesContainer = view.querySelector('#vocabCategoriesContainer');
+  const btnCloseVocabModal = view.querySelector('#btnCloseVocabModal');
+  const btnOkVocabModal = view.querySelector('#btnOkVocabModal');
+  const btnVocabModalPracticeVoice = view.querySelector('#btnVocabModalPracticeVoice');
+
   function renderTopics() {
     topicsBox.innerHTML = TOPICS.filter((t) => t.cat === category).map((t) => `
       <button class="topic ${t.id === topicId ? 'active' : ''}" data-topic="${t.id}">
@@ -180,6 +206,42 @@ export function renderHome(root) {
     }).join('');
   }
 
+  function openVocabModal() {
+    const vocab = getLevelVocabulary(level, language);
+    txtVocabModalTitle.textContent = vocab.title;
+    vocabCategoriesContainer.innerHTML = vocab.categories.map((cat) => `
+      <div class="vocab-cat-group">
+        <h4 class="vocab-cat-heading">📁 ${esc(cat.name)}</h4>
+        <div class="vocab-grid">
+          ${cat.items.map((it) => {
+            const word = language === 'it' && it.it ? it.it : it.term;
+            return `
+              <div class="vocab-card">
+                <div class="vocab-card-header">
+                  <span class="vocab-word">${esc(word)}</span>
+                  ${it.phonetic ? `<span class="vocab-phonetic">/${esc(it.phonetic)}/</span>` : ''}
+                </div>
+                <div class="vocab-trans"><b>${esc(it.es)}</b></div>
+                ${it.ex ? `<div class="vocab-example small muted">💬 "${esc(it.ex)}"</div>` : ''}
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `).join('');
+    modalLevelVocabulary.showModal();
+  }
+
+  function startVocabPractice() {
+    saveSettings({ language, level });
+    session.pending = {
+      language,
+      level,
+      mode: 'vocabulary',
+    };
+    location.hash = '#/talk';
+  }
+
   function renderLevelLessons() {
     const box = view.querySelector('#boxLevelLessons');
     if (!box) return;
@@ -197,17 +259,49 @@ export function renderHome(root) {
 
     const currTitle = getLevelTitle(level);
     const lang = LANGUAGES[language];
+    const vocab = getLevelVocabulary(level, language);
+    const totalWords = vocab.categories.reduce((acc, cat) => acc + cat.items.length, 0);
+
+    const displayedLessons = lessons.filter((ls) => {
+      if (lessonFilterTab === '1') return ls.num >= 1 && ls.num <= 5;
+      if (lessonFilterTab === '2') return ls.num >= 6 && ls.num <= 10;
+      if (lessonFilterTab === '3') return ls.num >= 11 && ls.num <= 15;
+      return true;
+    });
 
     box.innerHTML = `
-      <div class="level-lessons-header">
-        <h3 style="margin: 0; font-size: 1.05rem;">📖 Clases de ${esc(currTitle)}</h3>
-        <p class="muted small" style="margin: 2px 0 0;">Desarrolla tus clases guiadas con tu profesora ${esc(lang.teacherName)} según el plan de estudio.</p>
+      <!-- Sección Oficial de Vocabulario del Nivel -->
+      <div class="level-vocab-banner">
+        <div class="level-vocab-info">
+          <span class="level-vocab-pill">📚 Vocabulario Esencial</span>
+          <h3 class="level-vocab-title">${esc(vocab.title)}</h3>
+          <p class="muted small">${totalWords} palabras y expresiones indispensables con pronunciación fonética y ejemplos prácticos.</p>
+        </div>
+        <div class="level-vocab-actions">
+          <button type="button" class="btn secondary small" id="btnOpenVocab">📖 Ver Vocabulario (${totalWords})</button>
+          <button type="button" class="btn primary small" id="btnPracticeVocabVoice">🎙️ Practicar con Profe</button>
+        </div>
       </div>
+
+      <div class="level-lessons-header">
+        <div>
+          <h3 style="margin: 0; font-size: 1.05rem;">📖 Clases de ${esc(currTitle)} (15 Clases · ⏱️ ~10 min c/u)</h3>
+          <p class="muted small" style="margin: 2px 0 0;">Desarrolla tus clases guiadas con tu profesora ${esc(lang.teacherName)} según el plan de estudio.</p>
+        </div>
+        <div class="lesson-filter-tabs">
+          <button type="button" class="tab-chip ${lessonFilterTab === 'all' ? 'active' : ''}" data-filter="all">Todas (15)</button>
+          <button type="button" class="tab-chip ${lessonFilterTab === '1' ? 'active' : ''}" data-filter="1">1 a 5</button>
+          <button type="button" class="tab-chip ${lessonFilterTab === '2' ? 'active' : ''}" data-filter="2">6 a 10</button>
+          <button type="button" class="tab-chip ${lessonFilterTab === '3' ? 'active' : ''}" data-filter="3">11 a 15</button>
+        </div>
+      </div>
+
       <div class="level-lessons-grid">
-        ${lessons.map((ls) => `
+        ${displayedLessons.map((ls) => `
           <div class="lesson-card">
             <div class="lesson-card-top">
               <span class="lesson-num-pill">Clase ${ls.num}</span>
+              <span class="lesson-time-pill">⏱️ ~10 min</span>
               <h4 class="lesson-card-title">${esc(ls.title)}</h4>
             </div>
             <p class="muted small lesson-card-desc">${esc(ls.desc)}</p>
@@ -224,6 +318,21 @@ export function renderHome(root) {
         `).join('')}
       </div>
     `;
+
+    box.querySelector('#btnOpenVocab')?.addEventListener('click', () => {
+      openVocabModal();
+    });
+
+    box.querySelector('#btnPracticeVocabVoice')?.addEventListener('click', () => {
+      startVocabPractice();
+    });
+
+    box.querySelectorAll('.tab-chip').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        lessonFilterTab = btn.dataset.filter;
+        renderLevelLessons();
+      });
+    });
 
     box.querySelectorAll('.btn-take-lesson').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -412,6 +521,18 @@ export function renderHome(root) {
   });
   btnOkStudyPlan?.addEventListener('click', () => {
     modalStudyPlan.close();
+  });
+
+  // Modal de Vocabulario Oficial
+  btnCloseVocabModal?.addEventListener('click', () => {
+    modalLevelVocabulary.close();
+  });
+  btnOkVocabModal?.addEventListener('click', () => {
+    modalLevelVocabulary.close();
+  });
+  btnVocabModalPracticeVoice?.addEventListener('click', () => {
+    modalLevelVocabulary.close();
+    startVocabPractice();
   });
 
   view.querySelector('#btnRetakePlacement')?.addEventListener('click', () => {

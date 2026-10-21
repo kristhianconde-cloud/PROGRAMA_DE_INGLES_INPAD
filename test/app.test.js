@@ -9,11 +9,14 @@ import {
   LEVEL_ORDER,
   STUDY_PLAN,
   LEVEL_LESSONS,
+  LEVEL_VOCABULARY,
+  getLevelVocabulary,
   getNextLevel,
   getLevelTitle,
   getRandomExamScenario,
   buildLevelExamPrompt,
-  buildLessonPrompt
+  buildLessonPrompt,
+  buildVocabularyPrompt
 } from '../src/prompts/teacher.js';
 import { isLevelUnlocked, getHighestUnlockedLevel, getUnlockedLevels } from '../src/lib/storage.js';
 import { getTopic, TOPICS } from '../src/data/topics.js';
@@ -199,25 +202,27 @@ describe('Level Locking & Access Control', () => {
   });
 });
 
-describe('Instructor Structured Classes by Level', () => {
-  it('contains structured lessons for all levels', () => {
-    for (const lvl of ['zero', 'A1', 'A2', 'B1', 'B2', 'C1']) {
+describe('Instructor Structured Classes by Level (15 Classes per Level & ~10 min)', () => {
+  it('contains exactly 15 structured lessons for each of the 6 levels (90 total)', () => {
+    const levels = ['zero', 'A1', 'A2', 'B1', 'B2', 'C1'];
+    for (const lvl of levels) {
       const lessons = LEVEL_LESSONS[lvl];
       expect(lessons).toBeDefined();
-      expect(lessons.length).toBeGreaterThanOrEqual(3);
+      expect(lessons).toHaveLength(15);
 
-      for (const ls of lessons) {
-        expect(ls.id).toBeTruthy();
-        expect(ls.num).toBeGreaterThanOrEqual(1);
+      for (let i = 0; i < lessons.length; i++) {
+        const ls = lessons[i];
+        expect(ls.id).toBe(`${lvl}_${i + 1}`);
+        expect(ls.num).toBe(i + 1);
         expect(ls.title).toBeTruthy();
         expect(ls.desc).toBeTruthy();
-        expect(ls.phrases.length).toBeGreaterThanOrEqual(2);
+        expect(ls.phrases.length).toBeGreaterThanOrEqual(3);
         expect(ls.goal).toBeTruthy();
       }
     }
   });
 
-  it('builds pedagogical lesson prompt with 4 stages and bilingual support for level zero', () => {
+  it('builds pedagogical lesson prompt with 5 stages, ~10 min duration, and bilingual support for level zero', () => {
     const lesson = LEVEL_LESSONS.zero[0];
     const prompt = buildLessonPrompt({
       language: 'en',
@@ -229,10 +234,15 @@ describe('Instructor Structured Classes by Level', () => {
     expect(prompt).toContain('Emma');
     expect(prompt).toContain('Kristhian');
     expect(prompt).toContain('Clase 1');
+    expect(prompt).toContain('10-MINUTE');
     expect(prompt).toContain(lesson.title);
     expect(prompt).toContain('100% BILINGUAL GUIDED INSTRUCTION');
-    expect(prompt).toContain('4-STAGE LESSON STRUCTURE');
-    expect(prompt).toContain('PRESENTATION & GUIDED REPETITION');
+    expect(prompt).toContain('5 PEDAGOGICAL STAGES');
+    expect(prompt).toContain('STAGE 1: WARM WELCOME & CONTEXT');
+    expect(prompt).toContain('STAGE 2: VOCABULARY & PHONETIC MODELING');
+    expect(prompt).toContain('STAGE 3: GUIDED SENTENCE BUILDING');
+    expect(prompt).toContain('STAGE 4: REAL-WORLD SITUATIONAL ROLE-PLAY');
+    expect(prompt).toContain('STAGE 5: CONSOLIDATION');
   });
 
   it('builds pedagogical lesson prompt for intermediate level B1', () => {
@@ -246,8 +256,47 @@ describe('Instructor Structured Classes by Level', () => {
 
     expect(prompt).toContain('Giulia');
     expect(prompt).toContain('Clase 1');
+    expect(prompt).toContain('10-MINUTE');
     expect(prompt).toContain(lesson.title);
-    expect(prompt).toContain('GUIDED PEDAGOGICAL LESSON');
+    expect(prompt).toContain('IMMERSIVE GUIDED PEDAGOGICAL LESSON');
+    expect(prompt).toContain('5 PEDAGOGICAL STAGES');
+  });
+});
+
+describe('Level Vocabulary & Practice Drills', () => {
+  it('contains rich categorized vocabulary for each level', () => {
+    const levels = ['zero', 'A1', 'A2', 'B1', 'B2', 'C1'];
+    for (const lvl of levels) {
+      const vocab = getLevelVocabulary(lvl, 'en');
+      expect(vocab).toBeDefined();
+      expect(vocab.title).toBeTruthy();
+      expect(vocab.categories.length).toBeGreaterThanOrEqual(4);
+
+      for (const cat of vocab.categories) {
+        expect(cat.name).toBeTruthy();
+        expect(cat.items.length).toBeGreaterThanOrEqual(4);
+        for (const item of cat.items) {
+          expect(item.term).toBeTruthy();
+          expect(item.es).toBeTruthy();
+          expect(item.phonetic).toBeTruthy();
+          expect(item.ex).toBeTruthy();
+        }
+      }
+    }
+  });
+
+  it('builds specialized vocabulary practice prompt with teacher', () => {
+    const prompt = buildVocabularyPrompt({
+      language: 'en',
+      level: 'zero',
+      studentName: 'Kristhian'
+    });
+
+    expect(prompt).toContain('Emma');
+    expect(prompt).toContain('Kristhian');
+    expect(prompt).toContain('VOCABULARY & PRONUNCIATION DRILL SESSION');
+    expect(prompt).toContain('Saludos y Cortesía');
+    expect(prompt).toContain('repeat it after you');
   });
 });
 
