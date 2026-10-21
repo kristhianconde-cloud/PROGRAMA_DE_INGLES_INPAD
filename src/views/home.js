@@ -1,5 +1,5 @@
 import { getSettings, saveSettings, getHistory, getLastExamResult, getHighestUnlockedLevel, isLevelUnlocked } from '../lib/storage.js';
-import { LANGUAGES, LEVELS, LEVEL_ORDER, STUDY_PLAN, getNextLevel, getLevelTitle, getRandomExamScenario } from '../prompts/teacher.js';
+import { LANGUAGES, LEVELS, LEVEL_ORDER, STUDY_PLAN, LEVEL_LESSONS, getNextLevel, getLevelTitle, getRandomExamScenario } from '../prompts/teacher.js';
 import { CATEGORIES, TOPICS } from '../data/topics.js';
 import { el, esc } from '../lib/ui.js';
 import { session } from '../state.js';
@@ -80,6 +80,10 @@ export function renderHome(root) {
         `}
         <div class="chips levels" id="boxLevelChips"></div>
 
+        <!-- Clases del Nivel según el Plan de Estudio -->
+        <div class="level-lessons-container" id="boxLevelLessons"></div>
+
+        <!-- Tarjeta de Examen de Ascenso -->
         <div id="boxLevelExamContainer"></div>
       </section>
 
@@ -176,6 +180,68 @@ export function renderHome(root) {
     }).join('');
   }
 
+  function renderLevelLessons() {
+    const box = view.querySelector('#boxLevelLessons');
+    if (!box) return;
+
+    if (level === 'auto') {
+      box.innerHTML = '';
+      return;
+    }
+
+    const lessons = LEVEL_LESSONS[level] || [];
+    if (!lessons.length) {
+      box.innerHTML = '';
+      return;
+    }
+
+    const currTitle = getLevelTitle(level);
+    const lang = LANGUAGES[language];
+
+    box.innerHTML = `
+      <div class="level-lessons-header">
+        <h3 style="margin: 0; font-size: 1.05rem;">📖 Clases de ${esc(currTitle)}</h3>
+        <p class="muted small" style="margin: 2px 0 0;">Desarrolla tus clases guiadas con tu profesora ${esc(lang.teacherName)} según el plan de estudio.</p>
+      </div>
+      <div class="level-lessons-grid">
+        ${lessons.map((ls) => `
+          <div class="lesson-card">
+            <div class="lesson-card-top">
+              <span class="lesson-num-pill">Clase ${ls.num}</span>
+              <h4 class="lesson-card-title">${esc(ls.title)}</h4>
+            </div>
+            <p class="muted small lesson-card-desc">${esc(ls.desc)}</p>
+            <div class="lesson-phrases-box">
+              <span class="small muted" style="font-weight: 600; font-size: 0.78rem;">Frases clave:</span>
+              <div class="lesson-phrases-tags">
+                ${ls.phrases.slice(0, 3).map(p => `<span class="phrase-tag">${esc(p)}</span>`).join('')}
+              </div>
+            </div>
+            <button type="button" class="btn primary small w-full btn-take-lesson" data-lesson-id="${esc(ls.id)}" style="margin-top: 10px;">
+              🎙️ Tomar Clase ${ls.num}
+            </button>
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    box.querySelectorAll('.btn-take-lesson').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const lessonId = btn.dataset.lessonId;
+        const lesson = lessons.find((l) => l.id === lessonId);
+        if (!lesson) return;
+        saveSettings({ language, level });
+        session.pending = {
+          language,
+          level,
+          mode: 'lesson',
+          lesson,
+        };
+        location.hash = '#/talk';
+      });
+    });
+  }
+
   function startExam(fromLevel, targetLevel) {
     saveSettings({ language, level: fromLevel });
     const scenario = getRandomExamScenario(fromLevel, targetLevel, lastExam?.scenario?.id);
@@ -209,7 +275,7 @@ export function renderHome(root) {
             ${hasFailedAttempt ? `
               Último intento: <b style="color: #f59e0b;">${lastExam.score}/20</b>. Necesitas mínimo 15 para ascender. ¡Rinde un nuevo examen con una situación diferente!
             ` : `
-              Supera la nota mínima de <b>15 sobre 20</b> desde tu nivel actual (<b>${esc(currTitle)}</b>) para desbloquear el siguiente nivel.
+              Cuando sientas que dominas las clases de este nivel, rinde tu examen para subir oficialmente a <b>${esc(nextTitle)}</b> (nota mínima: <b>15 sobre 20</b>).
             `}
           </p>
         </div>
@@ -286,6 +352,7 @@ export function renderHome(root) {
     view.querySelectorAll('.lang-card').forEach((b) => b.classList.toggle('active', b.dataset.lang === language));
     view.querySelectorAll('[data-cat]').forEach((b) => b.classList.toggle('active', b.dataset.cat === category));
     renderLevelChips();
+    renderLevelLessons();
     renderTopics();
     renderExamBox();
 

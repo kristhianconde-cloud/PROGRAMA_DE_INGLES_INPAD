@@ -8,10 +8,12 @@ import {
   LEVEL_EXAM_TOOL,
   LEVEL_ORDER,
   STUDY_PLAN,
+  LEVEL_LESSONS,
   getNextLevel,
   getLevelTitle,
   getRandomExamScenario,
-  buildLevelExamPrompt
+  buildLevelExamPrompt,
+  buildLessonPrompt
 } from '../src/prompts/teacher.js';
 import { isLevelUnlocked, getHighestUnlockedLevel, getUnlockedLevels } from '../src/lib/storage.js';
 import { getTopic, TOPICS } from '../src/data/topics.js';
@@ -196,5 +198,58 @@ describe('Level Locking & Access Control', () => {
     expect(getUnlockedLevels()).toEqual(['auto', 'zero']);
   });
 });
+
+describe('Instructor Structured Classes by Level', () => {
+  it('contains structured lessons for all levels', () => {
+    for (const lvl of ['zero', 'A1', 'A2', 'B1', 'B2', 'C1']) {
+      const lessons = LEVEL_LESSONS[lvl];
+      expect(lessons).toBeDefined();
+      expect(lessons.length).toBeGreaterThanOrEqual(3);
+
+      for (const ls of lessons) {
+        expect(ls.id).toBeTruthy();
+        expect(ls.num).toBeGreaterThanOrEqual(1);
+        expect(ls.title).toBeTruthy();
+        expect(ls.desc).toBeTruthy();
+        expect(ls.phrases.length).toBeGreaterThanOrEqual(2);
+        expect(ls.goal).toBeTruthy();
+      }
+    }
+  });
+
+  it('builds pedagogical lesson prompt with 4 stages and bilingual support for level zero', () => {
+    const lesson = LEVEL_LESSONS.zero[0];
+    const prompt = buildLessonPrompt({
+      language: 'en',
+      level: 'zero',
+      lesson,
+      studentName: 'Kristhian'
+    });
+
+    expect(prompt).toContain('Emma');
+    expect(prompt).toContain('Kristhian');
+    expect(prompt).toContain('Clase 1');
+    expect(prompt).toContain(lesson.title);
+    expect(prompt).toContain('100% BILINGUAL GUIDED INSTRUCTION');
+    expect(prompt).toContain('4-STAGE LESSON STRUCTURE');
+    expect(prompt).toContain('PRESENTATION & GUIDED REPETITION');
+  });
+
+  it('builds pedagogical lesson prompt for intermediate level B1', () => {
+    const lesson = LEVEL_LESSONS.B1[0];
+    const prompt = buildLessonPrompt({
+      language: 'it',
+      level: 'B1',
+      lesson,
+      studentName: 'Kristhian'
+    });
+
+    expect(prompt).toContain('Giulia');
+    expect(prompt).toContain('Clase 1');
+    expect(prompt).toContain(lesson.title);
+    expect(prompt).toContain('GUIDED PEDAGOGICAL LESSON');
+  });
+});
+
 
 

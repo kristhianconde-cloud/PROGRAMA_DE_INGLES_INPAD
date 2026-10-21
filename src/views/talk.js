@@ -11,6 +11,7 @@ import {
   buildTeacherPrompt,
   buildPlacementPrompt,
   buildLevelExamPrompt,
+  buildLessonPrompt,
   CORRECTION_TOOL,
   PLACEMENT_TOOL,
   LEVEL_EXAM_TOOL,
@@ -37,6 +38,7 @@ export function renderTalk(root) {
   const lang = LANGUAGES[pending.language];
   const isPlacement = pending.mode === 'placement' || pending.level === 'auto';
   const isExam = pending.mode === 'exam';
+  const isLesson = pending.mode === 'lesson';
 
   const topic = pending.topicId ? getTopic(pending.topicId) : null;
   let topicTitle = 'Conversación libre';
@@ -44,6 +46,8 @@ export function renderTalk(root) {
     topicTitle = '🎯 Test de Diagnóstico Oral';
   } else if (isExam) {
     topicTitle = `🎓 Examen: ${getLevelTitle(pending.currentLevel)} ➔ ${getLevelTitle(pending.targetLevel)}`;
+  } else if (isLesson && pending.lesson) {
+    topicTitle = `📖 Clase ${pending.lesson.num}: ${pending.lesson.title}`;
   } else if (pending.customTopic) {
     topicTitle = pending.customTopic;
   } else if (topic) {
@@ -72,11 +76,14 @@ export function renderTalk(root) {
     subtitleText = `${lang.flag} ${lang.nameEs} · Evaluación de Nivel · <span id="timerText">00:00</span>`;
   } else if (isExam) {
     subtitleText = `${lang.flag} ${lang.nameEs} · Examen de Ascenso (Mínimo 15/20) · <span id="timerText">00:00</span>`;
+  } else if (isLesson) {
+    subtitleText = `${lang.flag} ${lang.nameEs} · ${getLevelTitle(pending.level)} · <span id="timerText">00:00</span>`;
   }
 
   let statusInitialText = 'Conectando con tu profesora...';
   if (isPlacement) statusInitialText = 'Iniciando tu test de nivelación...';
   if (isExam) statusInitialText = 'Tu examinadora iniciará la evaluación...';
+  if (isLesson) statusInitialText = `Iniciando la Clase ${pending.lesson?.num || ''}...`;
 
   const view = el(`
     <main class="page talk">
@@ -463,6 +470,15 @@ export function renderTalk(root) {
         });
         tools = LEVEL_EXAM_TOOL;
         startSignal = '[EXAM_START: Inicia el examen formal explicando el escenario de evaluación en español e inglés]';
+      } else if (isLesson && pending.lesson) {
+        prompt = buildLessonPrompt({
+          language: pending.language,
+          level: pending.level,
+          lesson: pending.lesson,
+          studentName,
+        });
+        tools = CORRECTION_TOOL;
+        startSignal = `[LESSON_START: Da la bienvenida a ${studentName} e inicia la Clase ${pending.lesson.num}: "${pending.lesson.title}" explicando el objetivo pedagógico y enseñando las primeras frases clave]`;
       } else {
         prompt = buildTeacherPrompt({
           language: pending.language,
@@ -484,10 +500,11 @@ export function renderTalk(root) {
         let readyStatus = 'Tu profesora está escuchando. ¡Habla!';
         if (isPlacement) readyStatus = 'Iniciando tu test de diagnóstico...';
         if (isExam) readyStatus = 'Iniciando tu examen de nivel...';
+        if (isLesson) readyStatus = `Clase ${pending.lesson?.num}: Tu profesora está enseñando...`;
 
         updateStatus('connected', readyStatus);
         chatFlow.innerHTML = '';
-        toast(isPlacement ? 'Iniciando test de diagnóstico' : (isExam ? 'Iniciando examen de nivel' : 'Conectado con tu profesora virtual'), 'success');
+        toast(isPlacement ? 'Iniciando test de diagnóstico' : (isExam ? 'Iniciando examen de nivel' : (isLesson ? `Iniciando Clase ${pending.lesson?.num}` : 'Conectado con tu profesora virtual')), 'success');
 
         // Iniciar cronómetro
         timerId = setInterval(() => {

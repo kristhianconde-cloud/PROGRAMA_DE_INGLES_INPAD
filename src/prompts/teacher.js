@@ -592,6 +592,273 @@ export function buildLevelExamPrompt(opts) {
 Professional examiner: encouraging yet objective. Spoken audio format only.`;
 }
 
+/**
+ * CATÁLOGO DE CLASES ESTRUCTURADAS DEL INSTRUCTOR POR NIVEL (PLAN DE ESTUDIOS)
+ */
+export const LEVEL_LESSONS = {
+  zero: [
+    {
+      id: 'zero_1',
+      num: 1,
+      title: 'Saludos, cortesía y primer contacto',
+      desc: 'Aprende a saludar, dar las gracias y responder cómo estás sin miedo.',
+      phrases: ['Hello / Hi', 'Good morning / afternoon', 'Please & Thank you', 'How are you? - Good!'],
+      goal: 'Aprender a saludar, responder cómo estás y usar fórmulas de cortesía esenciales.'
+    },
+    {
+      id: 'zero_2',
+      num: 2,
+      title: 'Presentación personal y de dónde eres',
+      desc: 'Aprende a decir tu nombre, de qué país eres y dar una bienvenida cordial.',
+      phrases: ['My name is...', 'I am from Peru', 'Nice to meet you', 'And you?'],
+      goal: 'Presentarte con tu nombre y país de origen con pronunciación clara.'
+    },
+    {
+      id: 'zero_3',
+      num: 3,
+      title: 'Números (1-20), colores y objetos cotidianos',
+      desc: 'Cuenta del 1 al 20 e identifica objetos comunes de tu entorno.',
+      phrases: ['One, two, three...', 'What is this?', 'It is a book / a phone', 'Red, blue, black'],
+      goal: 'Decir números básicos y nombrar 3 a 5 objetos cotidianos.'
+    },
+    {
+      id: 'zero_4',
+      num: 4,
+      title: 'Frases de supervivencia en clase',
+      desc: 'Aprende a pedir que repitan, decir que no entendiste y preguntar cómo se dice algo.',
+      phrases: ['I do not understand', 'Can you repeat please?', 'How do you say... in English?', 'Slower please'],
+      goal: 'Manejar las frases clave de supervivencia para comunicarte en cualquier clase.'
+    }
+  ],
+  A1: [
+    {
+      id: 'A1_1',
+      num: 1,
+      title: 'Mi rutina diaria y horarios',
+      desc: 'Describe tus actividades desde que despiertas hasta que te acuestas usando horas.',
+      phrases: ['I wake up at 7 AM', 'I have breakfast', 'I start work at 9', 'In the evening I relax'],
+      goal: 'Narrar tu día típico con verbos de acción y horas en presente simple.'
+    },
+    {
+      id: 'A1_2',
+      num: 2,
+      title: 'Mi familia, amigos y profesiones',
+      desc: 'Describe a tus familiares, amigos y qué profesiones tienen.',
+      phrases: ['This is my brother', 'He is an engineer', 'She works at a hospital', 'They are friendly'],
+      goal: 'Hablar de terceras personas (He/She) usando adjetivos y profesiones.'
+    },
+    {
+      id: 'A1_3',
+      num: 3,
+      title: 'En el café o restaurante y compras',
+      desc: 'Pide comida, bebidas y pregunta precios con naturalidad.',
+      phrases: ['I would like a coffee, please', 'How much is this?', 'Can I have the bill?', 'Here you go'],
+      goal: 'Realizar un pedido de comida y pagar una cuenta básica.'
+    },
+    {
+      id: 'A1_4',
+      num: 4,
+      title: 'Gustos, aficiones y tiempo libre',
+      desc: 'Expresa qué actividades te encantan, cuáles te gustan y cuáles no toleras.',
+      phrases: ['I like playing soccer', 'I love listening to music', 'I do not like waking up early', 'My favorite hobby is...'],
+      goal: 'Expresar preferencias y pasatiempos con fluidez.'
+    }
+  ],
+  A2: [
+    {
+      id: 'A2_1',
+      num: 1,
+      title: 'Mi fin de semana y anécdotas pasadas',
+      desc: 'Cuenta qué hiciste el fin de semana pasado usando verbos en pasado simple.',
+      phrases: ['Last weekend I went to...', 'I visited my family', 'We ate delicious food', 'It was amazing'],
+      goal: 'Usar el pasado simple (regular e irregular) para relatar eventos recientes.'
+    },
+    {
+      id: 'A2_2',
+      num: 2,
+      title: 'Viajes, aeropuerto y hotel',
+      desc: 'Regístrate en un hotel, ubica tu puerta de embarque y pide indicaciones.',
+      phrases: ['I have a reservation under...', 'Where is gate 5?', 'Is breakfast included?', 'Could you call a taxi?'],
+      goal: 'Desenvolverte en situaciones típicas de aeropuerto y alojamiento.'
+    },
+    {
+      id: 'A2_3',
+      num: 3,
+      title: 'Salud y en la farmacia',
+      desc: 'Explica síntomas comunes de salud y pide recomendaciones en una farmacia.',
+      phrases: ['I have a headache and a sore throat', 'I feel dizzy', 'What medicine should I take?', 'How often?'],
+      goal: 'Describir malestares físicos y comprender instrucciones médicas básicas.'
+    },
+    {
+      id: 'A2_4',
+      num: 4,
+      title: 'Comparaciones y planes a futuro',
+      desc: 'Compara ciudades, precios o productos y cuenta tus planes para el próximo mes.',
+      phrases: ['This city is bigger than...', 'It is more expensive', 'Next month I am going to travel', 'I hope to...'],
+      goal: 'Hacer comparaciones y expresar intenciones futuras con going to.'
+    }
+  ],
+  B1: [
+    {
+      id: 'B1_1',
+      num: 1,
+      title: 'Experiencias de vida y anécdotas memorables',
+      desc: 'Narra experiencias trascendentes conectando pasado simple y present perfect.',
+      phrases: ['I have worked here for three years', 'Once, while I was traveling...', 'It changed my perspective', 'Ever since then...'],
+      goal: 'Diferenciar con naturalidad acciones concluidas y experiencias acumuladas.'
+    },
+    {
+      id: 'B1_2',
+      num: 2,
+      title: 'Reclamos y resolución de imprevistos',
+      desc: 'Resuelve un problema con un vuelo cancelado, habitación equivocada o compra defectuosa.',
+      phrases: ['I am afraid there has been a mistake', 'My luggage hasn’t arrived yet', 'Could you look into this?', 'I would appreciate a solution'],
+      goal: 'Negociar una solución educada y firme ante un servicio deficiente.'
+    },
+    {
+      id: 'B1_3',
+      num: 3,
+      title: 'Trayectoria profesional y proyectos',
+      desc: 'Explica tus responsabilidades, cómo superaste un desafío y logros de equipo.',
+      phrases: ['In my current role, I manage...', 'One major obstacle was...', 'We succeeded by collaborating', 'The outcome was positive'],
+      goal: 'Describir metas, procesos y resultados en un contexto profesional.'
+    },
+    {
+      id: 'B1_4',
+      num: 4,
+      title: 'Consejos, hipótesis y segundo condicional',
+      desc: 'Plantea situaciones hipotéticas y brinda recomendaciones fundamentadas.',
+      phrases: ['If I had the chance, I would...', 'You ought to consider...', 'What would you do if...?', 'From my experience...'],
+      goal: 'Usar el segundo condicional para reflexionar sobre escenarios imaginarios.'
+    }
+  ],
+  B2: [
+    {
+      id: 'B2_1',
+      num: 1,
+      title: 'Entrevista laboral por competencias (Método STAR)',
+      desc: 'Estructura respuestas de alto impacto: Situación, Tarea, Acción y Resultado.',
+      phrases: ['In that situation, our priority was...', 'My responsibility was to coordinate...', 'I took the initiative to...', 'As a result, we achieved...'],
+      goal: 'Articular respuestas profesionales convincentes y bien estructuradas.'
+    },
+    {
+      id: 'B2_2',
+      num: 2,
+      title: 'Negociación comercial y objeciones',
+      desc: 'Defiende tu propuesta, analiza contraofertas y cierra acuerdos comerciales.',
+      phrases: ['We are prepared to meet your terms provided that...', 'From our standpoint...', 'Would you consider compromising on...?', 'Let’s seal the deal'],
+      goal: 'Manejar objeciones con diplomacia y lenguaje persuasivo.'
+    },
+    {
+      id: 'B2_3',
+      num: 3,
+      title: 'Debate: Inteligencia Artificial y Sociedad',
+      desc: 'Argumenta sobre el impacto de la automatización en el empleo y la ética.',
+      phrases: ['On the one hand... whereas on the other hand...', 'It poses significant challenges', 'Furthermore, research indicates...', 'I strongly maintain that...'],
+      goal: 'Defender posturas complejas usando conectores de discurso formales.'
+    },
+    {
+      id: 'B2_4',
+      num: 4,
+      title: 'Deducciones pasadas y situaciones retrospectivas',
+      desc: 'Analiza causas y consecuencias de decisiones pasadas con condicionales mixtos.',
+      phrases: ['They must have overlooked the risks', 'If we had acted sooner, we could have avoided...', 'It might have been different if...'],
+      goal: 'Formular hipótesis retrospectivas precisas con modales perfectos.'
+    }
+  ],
+  C1: [
+    {
+      id: 'C1_1',
+      num: 1,
+      title: 'Liderazgo ejecutivo y oratoria persuasiva',
+      desc: 'Comunica una visión estratégica con recursos retóricos e inversión enfática.',
+      phrases: ['Rarely do we witness such paradigm shifts...', 'Not only must we adapt, but we should also pioneer...', 'The underlying imperative is...'],
+      goal: 'Inspirar y persuadir con elegancia discursiva y entonación de orador.'
+    },
+    {
+      id: 'C1_2',
+      num: 2,
+      title: 'Negociación estratégica internacional y diplomacia',
+      desc: 'Aborda cláusulas contractuales sensibles y mitigación de riesgos globales.',
+      phrases: ['It is paramount that all contingencies be accounted for', 'Notwithstanding the preliminary consensus...', 'To foster reciprocal goodwill...'],
+      goal: 'Manejar registros formales sofisticados y cláusulas de alta precisión.'
+    },
+    {
+      id: 'C1_3',
+      num: 3,
+      title: 'Modismos culturales, ironía y colocaciones nativas',
+      desc: 'Domina frases idiomáticas, dobles sentidos y el humor sutil del idioma nativo.',
+      phrases: ['To play devil’s advocate', 'Cut to the chase', 'A double-edged sword', 'Take it with a grain of salt'],
+      goal: 'Integrar expresiones idiomáticas con naturalidad y fluidez nativa.'
+    }
+  ]
+};
+
+/**
+ * Genera el prompt oficial para el MODO INSTRUCTOR DE CLASE según el plan de estudio.
+ */
+export function buildLessonPrompt(opts) {
+  const lang = LANGUAGES[opts.language || 'en'];
+  const name = opts.studentName ? opts.studentName.trim() : 'alumno';
+  const level = opts.level || 'zero';
+  const lesson = opts.lesson;
+  const isZero = level === 'zero';
+
+  const pedagogyGuidelines = isZero
+    ? `CLASS METHODOLOGY: 100% BILINGUAL GUIDED INSTRUCTION (Spanish + ${lang.name})
+- The student is at LEVEL 0 (Complete beginner).
+- SPANISH IS YOUR PRIMARY LANGUAGE OF EXPLANATION AND COMFORT.
+- Introduce ONE single phrase or word in ${lang.name} at a time.
+- Say it slowly, explain what it means in Spanish, and ask the student to repeat in Spanish (e.g. "A ver ${name}, repite conmigo: '${lesson.phrases[0]}'").
+- Celebrate their repetition in Spanish ("¡Excelente pronunciación! Muy bien.").
+- If they speak Spanish, that is completely welcome. Guide them kindly.`
+    : `CLASS METHODOLOGY: GUIDED PEDAGOGICAL LESSON
+- The student is at level ${level}.
+- Teach the class focusing on the learning objective: "${lesson.goal}".
+- Speak clearly in ${lang.name}, and give short explanations or encouragement in Spanish when helpful.
+- Model the key phrases, check their pronunciation, and have them construct sentences using them.`;
+
+  return `You are ${lang.teacherName}, an inspiring, patient and pedagogical ${lang.name} teacher conducting an OFFICIAL STRUCTURED CLASS for ${name}.
+
+# CLASS IDENTIFICATION
+- LEVEL: ${getLevelTitle(level)} (${level})
+- LESSON NUMBER: Clase ${lesson.num}
+- LESSON TITLE: "${lesson.title}"
+- DESCRIPTION: "${lesson.desc}"
+- LEARNING GOAL: "${lesson.goal}"
+- KEY PHRASES & VOCABULARY TO TEACH:
+  ${lesson.phrases.map((p, i) => `${i + 1}. "${p}"`).join('\n  ')}
+
+# ${pedagogyGuidelines}
+
+# 4-STAGE LESSON STRUCTURE
+
+1. WARM WELCOME & GOAL (1 TURN):
+   Greet ${name} warmly and state clearly what you will learn today:
+   "¡Hola ${name}! Bienvenido/a a tu Clase ${lesson.num}: '${lesson.title}'. Hoy vamos a aprender y practicar cómo ${lesson.goal.toLowerCase()}. ¿Estás listo/a para comenzar?"
+   Wait for their response.
+
+2. PRESENTATION & GUIDED REPETITION (2-3 TURNS):
+   - Present the first 1 or 2 key phrases from today's lesson.
+   - Explain what they mean and when to use them.
+   - Model the exact pronunciation slowly and clearly.
+   - Ask ${name} to repeat the phrase aloud.
+   - When they repeat, give immediate positive feedback and correct any small pronunciation detail.
+
+3. INTERACTIVE MINI-DIALOGUE / PRACTICE (2-3 TURNS):
+   - Create a realistic mini-scenario where ${name} must use the phrases they just learned in this class.
+   - Ask them an open question or invite them to role-play that specific situation.
+   - Praise their sentence construction and provide natural corrections.
+
+4. WRAP-UP & SUMMARY (FINAL TURN):
+   - Congratulate ${name} for completing Clase ${lesson.num}.
+   - Briefly summarize in Spanish the key phrases they mastered today.
+   - Remind them that they can practice this class again anytime or take the next class, and when they feel ready, they can take the Level-Up Exam to advance!
+
+# STYLE & TONE
+Encouraging, pedagogical, structured and warm. Spoken audio format only (do not use markdown, asterisks or bullet points in spoken output).`;
+}
+
 /** Mensaje de ayuda que envían los botones de la sala de conversación. */
 export function helpMessage(kind) {
   const map = {
@@ -603,3 +870,4 @@ export function helpMessage(kind) {
   if (!map[kind]) throw new Error(`Ayuda desconocida: ${kind}`);
   return map[kind];
 }
+
