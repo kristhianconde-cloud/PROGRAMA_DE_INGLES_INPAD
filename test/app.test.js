@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildTeacherPrompt, LANGUAGES, CORRECTION_TOOL } from '../src/prompts/teacher.js';
+import { buildTeacherPrompt, buildPlacementPrompt, LANGUAGES, CORRECTION_TOOL, PLACEMENT_TOOL } from '../src/prompts/teacher.js';
 import { getTopic, TOPICS } from '../src/data/topics.js';
 import { highlight, formatDuration } from '../src/lib/ui.js';
 
@@ -37,6 +37,19 @@ describe('Profesor Virtual Prompts & Tools', () => {
     const decl = CORRECTION_TOOL.functionDeclarations[0];
     expect(decl.name).toBe('report_correction');
     expect(decl.parameters.required).toEqual(['type', 'said', 'correct', 'explanation']);
+  });
+
+  it('declares the report_placement_result tool and generates placement prompt', () => {
+    const prompt = buildPlacementPrompt({ language: 'en', studentName: 'Kristhian' });
+    expect(prompt).toContain('Emma');
+    expect(prompt).toContain('ORAL PLACEMENT TEST');
+    expect(prompt).toContain('Kristhian');
+    expect(prompt).toContain('report_placement_result');
+
+    expect(PLACEMENT_TOOL.functionDeclarations.length).toBeGreaterThanOrEqual(1);
+    const placementDecl = PLACEMENT_TOOL.functionDeclarations.find(d => d.name === 'report_placement_result');
+    expect(placementDecl).toBeDefined();
+    expect(placementDecl.parameters.required).toEqual(['level', 'levelTitle', 'rationale']);
   });
 });
 

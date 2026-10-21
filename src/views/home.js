@@ -11,7 +11,7 @@ export function renderHome(root) {
   const user = getCurrentUser();
   const studentDisplayName = user?.displayName || s.studentName || (user?.email ? user.email.split('@')[0] : '');
   let language = s.language;
-  let level = s.level;
+  let level = s.level || 'auto';
   let category = 'trabajo';
   let topicId = null;
 
@@ -54,13 +54,26 @@ export function renderHome(root) {
 
       <section class="block">
         <h2 class="block-title">2. Tu nivel</h2>
-        <p class="muted small" style="margin-bottom: 8px;">¿No tienes base o no sabes nada? Elige <b>🌱 Desde cero (A0)</b> o déjalo en <b>Detectar mi nivel</b> y la profesora te enseñará paso a paso en español.</p>
+        ${s.diagnosedLevel ? `
+          <div class="diagnosed-badge-banner">
+            <span class="badge-icon">🏅</span>
+            <div style="flex: 1;">
+              <b>Tu nivel diagnosticado: ${esc(s.diagnosedFeedback?.levelTitle || s.diagnosedLevel)}</b>
+              <p class="muted small">Tus clases se adaptan automáticamente a este ritmo.</p>
+            </div>
+            <button type="button" class="btn ghost small" id="btnRetakePlacement">Reevaluar nivel ↺</button>
+          </div>
+        ` : `
+          <p class="muted small" style="margin-bottom: 8px;">
+            ¿No conoces tu nivel? Elige <b>🎯 Detectar mi nivel</b> y la profesora te hará un test oral amigable de 2 minutos para ubicarte exactamente.
+          </p>
+        `}
         <div class="chips levels">
           ${LEVELS.map((lv) => `<button class="chip" data-level="${lv.id}">${lv.label}</button>`).join('')}
         </div>
       </section>
 
-      <section class="block">
+      <section class="block" id="secTopics">
         <h2 class="block-title">3. Tema o situación</h2>
         <div class="chips cats">
           ${CATEGORIES.map((c) => `<button class="chip" data-cat="${c.id}">${c.emoji} ${c.label}</button>`).join('')}
@@ -87,6 +100,7 @@ export function renderHome(root) {
   const custom = view.querySelector('#custom');
   const startBtn = view.querySelector('.start');
   const selection = view.querySelector('.selection');
+  const secTopics = view.querySelector('#secTopics');
 
   function renderTopics() {
     topicsBox.innerHTML = TOPICS.filter((t) => t.cat === category).map((t) => `
@@ -101,14 +115,27 @@ export function renderHome(root) {
     view.querySelectorAll('[data-level]').forEach((b) => b.classList.toggle('active', b.dataset.level === level));
     view.querySelectorAll('[data-cat]').forEach((b) => b.classList.toggle('active', b.dataset.cat === category));
     renderTopics();
-    const customText = custom.value.trim();
-    const topic = TOPICS.find((t) => t.id === topicId);
+
     const lang = LANGUAGES[language];
-    const ready = Boolean(customText || topic);
-    startBtn.disabled = !ready;
-    selection.textContent = ready
-      ? `${lang.flag} ${lang.nameEs} · ${level === 'auto' ? 'nivel automático' : level} · ${customText ? 'Tema libre' : topic.title}`
-      : 'Elige un tema o escribe uno propio';
+    const isPlacement = level === 'auto';
+
+    if (isPlacement) {
+      // Modo diagnóstico
+      startBtn.disabled = false;
+      startBtn.innerHTML = '🎯 Empezar Test de Diagnóstico';
+      selection.innerHTML = `🎯 <b>Test de Diagnóstico Oral:</b> Conversación guiada de 2-3 min con Profe ${lang.teacherName} para fijar tu nivel.`;
+      secTopics.style.opacity = '0.5';
+    } else {
+      secTopics.style.opacity = '1';
+      startBtn.innerHTML = '🎙️ Empezar conversación';
+      const customText = custom.value.trim();
+      const topic = TOPICS.find((t) => t.id === topicId);
+      const ready = Boolean(customText || topic);
+      startBtn.disabled = !ready;
+      selection.textContent = ready
+        ? `${lang.flag} ${lang.nameEs} · Nivel ${level} · ${customText ? 'Tema libre' : topic.title}`
+        : 'Elige un tema o escribe uno propio';
+    }
   }
 
   view.addEventListener('click', (e) => {
@@ -124,6 +151,12 @@ export function renderHome(root) {
     refresh();
   });
 
+  view.querySelector('#btnRetakePlacement')?.addEventListener('click', () => {
+    level = 'auto';
+    refresh();
+    startBtn.click();
+  });
+
   custom.addEventListener('input', () => {
     if (custom.value.trim()) topicId = null;
     refresh();
@@ -134,8 +167,9 @@ export function renderHome(root) {
     session.pending = {
       language,
       level,
-      topicId: custom.value.trim() ? null : topicId,
-      customTopic: custom.value.trim(),
+      mode: level === 'auto' ? 'placement' : 'conversation',
+      topicId: level === 'auto' ? null : (custom.value.trim() ? null : topicId),
+      customTopic: level === 'auto' ? null : custom.value.trim(),
     };
     location.hash = '#/talk';
   });

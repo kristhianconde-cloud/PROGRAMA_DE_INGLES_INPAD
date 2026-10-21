@@ -142,6 +142,8 @@ export class LiveClient extends EventTarget {
       for (const fc of msg.toolCall.functionCalls) {
         if (fc.name === 'report_correction') {
           this.emit('correction', fc.args || {});
+        } else if (fc.name === 'report_placement_result') {
+          this.emit('placement-result', fc.args || {});
         }
         responses.push({ id: fc.id, name: fc.name, response: { result: 'ok' } });
       }

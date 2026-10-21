@@ -23,6 +23,9 @@ const DEFAULTS = {
   correctionMode: 'balanced',
   explainIn: 'auto',
   studentName: '',
+  diagnosedLevel: null,
+  diagnosedDate: null,
+  diagnosedFeedback: null,
 };
 
 export function getSettings() {
@@ -37,6 +40,15 @@ export function saveSettings(patch) {
   const next = { ...getSettings(), ...patch };
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
   return next;
+}
+
+export function saveDiagnosedLevel(result) {
+  return saveSettings({
+    diagnosedLevel: result.level,
+    diagnosedDate: new Date().toISOString(),
+    diagnosedFeedback: result,
+    level: result.level, // fija el nivel automáticamente para las próximas clases
+  });
 }
 
 export function getHistory() {

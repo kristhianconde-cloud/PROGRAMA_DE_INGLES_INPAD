@@ -175,6 +175,102 @@ export const CORRECTION_TOOL = {
   ],
 };
 
+/** Herramienta oficial para emitir el veredicto del examen oral de diagnóstico */
+export const PLACEMENT_TOOL = {
+  functionDeclarations: [
+    {
+      name: 'report_placement_result',
+      description: 'Emits the official placement diagnostic test result after evaluating the student during the oral interview.',
+      parameters: {
+        type: 'OBJECT',
+        properties: {
+          level: {
+            type: 'STRING',
+            enum: ['zero', 'A1', 'A2', 'B1', 'B2', 'C1'],
+            description: 'The CEFR level determined: zero (A0 complete beginner), A1 (beginner), A2 (elementary), B1 (intermediate), B2 (upper-intermediate), or C1 (advanced).'
+          },
+          levelTitle: {
+            type: 'STRING',
+            description: 'Human-readable title in Spanish, e.g. "A1 · Principiante", "A2 · Básico", "B1 · Intermedio", etc.'
+          },
+          rationale: {
+            type: 'STRING',
+            description: 'Brief encouraging summary in Spanish (max 40 words) explaining why this level was diagnosed based on their answers.'
+          },
+          strengths: {
+            type: 'ARRAY',
+            items: { type: 'STRING' },
+            description: 'List of 2-3 positive things the student demonstrated.'
+          },
+          suggestions: {
+            type: 'ARRAY',
+            items: { type: 'STRING' },
+            description: 'List of 2-3 specific topics or skills to practice in future classes.'
+          }
+        },
+        required: ['level', 'levelTitle', 'rationale']
+      }
+    },
+    CORRECTION_TOOL.functionDeclarations[0]
+  ]
+};
+
+/**
+ * Prompt para el Test de Diagnóstico Oral Adaptativo (Placement Test).
+ */
+export function buildPlacementPrompt(opts) {
+  const lang = LANGUAGES[opts.language || 'en'];
+  const name = opts.studentName ? opts.studentName.trim() : 'alumno';
+
+  return `You are ${lang.teacherName}, an empathetic and expert ${lang.name} teacher conducting a brief, 2-to-3 minute ORAL PLACEMENT TEST (Test de Diagnóstico de Nivel) for ${name}.
+
+# PURPOSE
+Determine the student's true CEFR level (zero/A0, A1, A2, B1, B2, or C1) in spoken ${lang.name} through a gentle, adaptive interview.
+DO NOT intimidate or speak too fast. The student must feel safe and encouraged.
+
+# STRUCTURE OF THE DIAGNOSTIC (3 PHASES)
+
+1. START WITH WARM WELCOME IN SPANISH:
+   Start by greeting in Spanish:
+   "¡Hola ${name}! Soy tu profesora ${lang.teacherName}. Vamos a tener una pequeña charla de 2 minutos para conocer tu nivel inicial de ${lang.nameEs}. No te preocupes por equivocarte, empezaremos muy simple. ¿Estás listo/a?"
+   Wait for them to respond (they can say "sí", "yes", or nod).
+
+2. PHASE 1: BEGINNER CHECK (A0 / A1)
+   Ask a very simple question in ${lang.name}:
+   "What is your name and where are you from?" (or in Italian: "Come ti chiami e di dove sei?").
+   - IF THE STUDENT DOES NOT UNDERSTAND, IS SILENT, OR RESPONDS IN SPANISH:
+     Comfort them warmly in Spanish: "No te preocupes para nada, para eso estamos aquí."
+     Ask one simple word or phrase to repeat. You have determined their level is "zero" (A0) or "A1".
+     Immediately call report_placement_result with level="zero" or "A1".
+   - IF THEY ANSWER CLEARLY in ${lang.name}: Proceed to Phase 2.
+
+3. PHASE 2: ELEMENTARY & INTERMEDIATE CHECK (A2 / B1)
+   Ask about their daily routine, past experience, or job:
+   "Tell me a little bit about your job or what you did last weekend."
+   - If they can answer with simple words and basic sentences, but struggle with complex tenses: Level is A2.
+   - If they form connected sentences with good vocabulary and few hesitations: Level is B1. Proceed to Phase 3 if they seem very fluent.
+
+4. PHASE 3: UPPER-INTERMEDIATE / ADVANCED CHECK (B2 / C1)
+   Ask a slightly abstract opinion question:
+   "Why do you think learning new languages is important for your personal growth or career?"
+   - If they express detailed opinions with natural flow and idioms: Level is B2 or C1.
+
+# HOW TO CONCLUDE (CRITICAL)
+- After 3 to 5 student turns, you will have enough evidence to diagnose their level.
+- CALL the tool report_placement_result with:
+  * level: 'zero' | 'A1' | 'A2' | 'B1' | 'B2' | 'C1'
+  * levelTitle: e.g. "A1 · Principiante", "A2 · Básico", "B1 · Intermedio", etc.
+  * rationale: An encouraging summary in Spanish explaining their level.
+  * strengths: 2-3 positive points.
+  * suggestions: 2-3 focus areas for upcoming classes.
+- SIMULTANEOUSLY say warmly in Spanish aloud:
+  "¡Excelente trabajo, ${name}! Hemos completado tu diagnóstico con éxito. Según nuestra conversación, tu nivel actual es [levelTitle]. He configurado tu perfil con este nivel para que todas tus próximas clases se adapten exactamente a tu ritmo. ¡Nos vemos en tu primera clase!"
+- After announcing this, stop asking questions. The test is finished.
+
+# TONE & STYLE
+Extremely encouraging, patient, warm, and professional. Spoken audio format (no markdown, no bullets in speech).`;
+}
+
 /** Mensaje de ayuda que envían los botones de la sala de conversación. */
 export function helpMessage(kind) {
   const map = {

@@ -1065,4 +1065,58 @@ div.modal[hidden] {
   color: white;
 }
 
+/* === TEST DE DIAGNÓSTICO ORAL (PLACEMENT TEST) === */
+.diagnosed-badge-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+.diagnosed-badge-banner .badge-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.placement-card {
+  max-width: 500px;
+}
+.placement-badge-box {
+  display: flex;
+  justify-content: center;
+  margin: 6px 0 14px;
+}
+.placement-badge {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff;
+  font-size: 1.35rem;
+  font-weight: 700;
+  padding: 8px 24px;
+  border-radius: var(--radius-full);
+  box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+  letter-spacing: -0.01em;
+}
+.placement-info {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+.placement-info ul {
+  padding-left: 20px;
+  margin-top: 4px;
+  font-size: 0.9rem;
+}
+.placement-info li {
+  margin-bottom: 3px;
+}
+
+
 
