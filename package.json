@@ -9,7 +9,8 @@
     "dev": "vite --host",
     "build": "vite build",
     "preview": "vite preview --host",
-    "test": "vitest run"
+    "test": "vitest run",
+    "deploy": "vite build && git --work-tree dist checkout --orphan gh-pages && git --work-tree dist add -A && git --work-tree dist commit -m 'deploy: update PWA' && git push origin gh-pages --force && git checkout -f main && git branch -D gh-pages"
   },
   "devDependencies": {
     "vite": "^6.0.0",
