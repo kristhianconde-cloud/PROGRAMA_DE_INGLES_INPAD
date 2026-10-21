@@ -25,9 +25,101 @@ export const CORRECTION_MODES = {
   fluency: { label: 'Solo fluidez', desc: 'Casi no interrumpe; anota los errores para el resumen.' },
 };
 
+export const STUDY_PLAN = [
+  {
+    id: 'zero',
+    code: 'A0',
+    title: '🌱 Desde Cero (A0)',
+    subtitle: 'Primeros Pasos y Confianza',
+    description: 'Aprende los fundamentos del idioma sin miedo con enseñanza 100% bilingüe y guiada.',
+    objectives: [
+      'Perder el miedo a hablar y familiarizarse con los sonidos del idioma.',
+      'Aprender saludos, fórmulas de cortesía y presentaciones personales básicas.',
+      'Comprender y pronunciar números, colores y objetos cotidianos.',
+      'Manejar frases clave de supervivencia: pedir repetición y ayuda.'
+    ],
+    grammar: 'Vocabulario esencial, pronombres personales (I, you), verbo To Be básico en presente.',
+    examRequirement: 'Aprobar el Examen Oral de Nivel 0 con nota mínima de 15/20 para desbloquear el Nivel A1.'
+  },
+  {
+    id: 'A1',
+    code: 'A1',
+    title: 'A1 · Principiante',
+    subtitle: 'Mi Entorno y Vida Cotidiana',
+    description: 'Comunica información básica sobre ti mismo, tu familia, rutina y compras simples.',
+    objectives: [
+      'Describir tu rutina diaria, horarios y actividades habituales.',
+      'Hablar de tu familia, amigos y profesiones sencillas.',
+      'Pedir comida o bebidas en un café/restaurante y preguntar precios.',
+      'Expresar gustos y disgustos con oraciones sencillas.'
+    ],
+    grammar: 'Presente simple, preguntas con Do/Does/Wh-, preposiciones de lugar y tiempo (in, on, at).',
+    examRequirement: 'Aprobar el Examen Oral de A1 con nota mínima de 15/20 para desbloquear el Nivel A2.'
+  },
+  {
+    id: 'A2',
+    code: 'A2',
+    title: 'A2 · Básico',
+    subtitle: 'Relatos, Viajes y Situaciones Prácticas',
+    description: 'Relata experiencias pasadas, planes futuros y desenvuélvete en viajes y compras.',
+    objectives: [
+      'Describir qué hiciste el fin de semana o en un viaje pasado.',
+      'Pedir direcciones en la calle, registrarte en un hotel y abordar un vuelo.',
+      'Explicar síntomas sencillos de salud en una farmacia o consulta.',
+      'Hacer comparaciones entre lugares, productos o personas.'
+    ],
+    grammar: 'Pasado simple (verbos regulares e irregulares), Pasado continuo, Comparativos y Going to.',
+    examRequirement: 'Aprobar el Examen Oral de A2 con nota mínima de 15/20 para desbloquear el Nivel B1.'
+  },
+  {
+    id: 'B1',
+    code: 'B1',
+    title: 'B1 · Intermedio',
+    subtitle: 'Conversación Fluida y Resolución de Imprevistos',
+    description: 'Narra historias conectadas y resuelve imprevistos cotidianos y laborales en el extranjero.',
+    objectives: [
+      'Resolver reclamos prácticos con aerolíneas, hoteles o compras defectuosas.',
+      'Hablar de tu experiencia profesional y proyectos desafiantes.',
+      'Expresar acuerdos, desacuerdos educados y recomendaciones personales.',
+      'Conversar con espontaneidad sobre viajes, cultura y planes a futuro.'
+    ],
+    grammar: 'Present Perfect vs Past Simple, Primer y Segundo Condicional (If I had... I would), Modales de consejo (should).',
+    examRequirement: 'Aprobar el Examen Oral de B1 con nota mínima de 15/20 para desbloquear el Nivel B2.'
+  },
+  {
+    id: 'B2',
+    code: 'B2',
+    title: 'B2 · Intermedio Alto',
+    subtitle: 'Argumentación, Negociación y Debates',
+    description: 'Comunícate con soltura con nativos, participa en debates complejos y negocia con seguridad.',
+    objectives: [
+      'Afrontar entrevistas laborales avanzadas estructurando respuestas por logros.',
+      'Debatir sobre temas actuales: tecnología, inteligencia artificial y sociedad.',
+      'Negociar acuerdos comerciales, concesiones y resolver desacuerdos de equipo.',
+      'Expresar matices, hipótesis y opiniones con conectores formales.'
+    ],
+    grammar: 'Condicionales mixtos, modales de deducción pasada (must have, could have), conectores avanzados (furthermore, whereas).',
+    examRequirement: 'Aprobar el Examen Oral de B2 con nota mínima de 15/20 para desbloquear el Nivel C1.'
+  },
+  {
+    id: 'C1',
+    code: 'C1',
+    title: 'C1 · Avanzado',
+    subtitle: 'Dominio Profesional y Expresión Nativa',
+    description: 'Domina el idioma con fluidez espontánea, oratoria de impacto y modismos culturales.',
+    objectives: [
+      'Liderar presentaciones y negociaciones estratégicas internacionales.',
+      'Manejar dobles sentidos, modismos (idioms) y registros formales e informales.',
+      'Elaborar argumentos sofisticados y persuasivos en tiempo real sin vacilación.'
+    ],
+    grammar: 'Estructuras complejas, inversión enfática, colocaciones léxicas avanzadas y fonética nativa.',
+    examRequirement: 'Nivel de Maestría Profesional alcanzado.'
+  }
+];
+
 const LEVEL_GUIDE = {
   auto: 'The student\'s level is unknown. Start with a friendly, accessible bilingual greeting (e.g., greet in the language, then in Spanish encourage them: "¡Hola! Si entiendes un poco, cuéntame: What is your name? Y si no entiendes nada, ¡tranquilo! Dime \'empecemos desde cero\' y te enseño paso a paso"). IF THE STUDENT STAYS SILENT, HESITATES, SAYS THEY DO NOT UNDERSTAND, OR RESPONDS IN SPANISH: immediately assume they are a complete beginner (A0/A1), reassure them warmly in Spanish, switch to very simple words, teach them phrase by phrase and guide them gently.',
-  zero: 'The student is starting from ZERO (CEFR A0). Do NOT speak only in the target language. Use Spanish to explain and guide them! Teach them essential words and phrases one at a time (e.g. greetings, "my name is...", basic everyday words). Model the pronunciation clearly, explain what it means in Spanish, invite them to repeat, celebrate their success, and build their confidence step by step.',
+  zero: 'The student is starting from ZERO (CEFR A0). CONDUCT A BILINGUAL SPANISH-ENGLISH CLASS. Use Spanish to explain, guide, teach, and reassure them! Teach essential words and phrases one by one (greetings, polite phrases, basic daily items). Pronounce each word clearly, invite them in Spanish to repeat, praise their effort warmly in Spanish, and build their confidence step by step without any intimidation.',
   A1: 'The student is a beginner (CEFR A1). Speak slowly and clearly, use very short sentences, basic everyday vocabulary and present tense. If they look lost or stay silent, explain in Spanish and rephrase.',
   A2: 'The student is elementary (CEFR A2). Speak slowly, use short sentences and common vocabulary. Introduce simple past and future gently.',
   B1: 'The student is intermediate (CEFR B1). Speak at a moderate pace with natural but not complex language. Encourage longer answers and opinions.',
@@ -87,16 +179,28 @@ export function buildTeacherPrompt(opts) {
 
   const name = opts.studentName ? ` The student's name is ${opts.studentName}.` : '';
 
+  const isZero = level === 'zero';
+  const languageSection = isZero
+    ? `# LANGUAGE & PEDAGOGY: BILINGUAL (SPANISH + ${lang.name.toUpperCase()})
+- This student is starting from ZERO (CEFR A0).
+- YOUR PRIMARY SPOKEN LANGUAGE FOR GUIDANCE, EXPLANATIONS AND ENCOURAGEMENT IS SPANISH.
+- DO NOT speak fast, fluent or long paragraphs in ${lang.name}. It will intimidate them!
+- Introduce ONE single word or short phrase at a time in ${lang.name}.
+- In Spanish, explain what the word means, pronounce it slowly and clearly in ${lang.name}, and invite the student in Spanish to repeat it (e.g., "A ver ${opts.studentName || 'amigo/a'}, repite conmigo: 'Hello, good morning'...").
+- Celebrate their repetition warmly in Spanish ("¡Excelente pronunciación! Muy bien."), then proceed with the next word or response.
+- If the student speaks Spanish, that is completely normal and encouraged! Respond in Spanish and teach them how to express that in simple ${lang.name}.`
+    : `# LANGUAGE
+- Speak ${lang.name} at all times, with ${lang.accent}.
+- Give short explanations of corrections in ${explainLang}.
+- If the student speaks Spanish because they don't know a word, tell them the word in ${lang.name}, have them say it, and continue.
+- If the student explicitly asks for an explanation in Spanish, give it briefly in Spanish, then return to ${lang.name}.`;
+
   return `You are ${lang.teacherName}, a warm, patient and encouraging ${lang.name} teacher having a live VOICE conversation with a Spanish-speaking student (from Latin America) who wants to improve their spoken ${lang.name}.${name}
 
 # GOAL
 The student learns by TALKING, not by repeating drills. Keep a real, engaging conversation going on the chosen topic, and help them improve at the same time by correcting their pronunciation, grammar and vocabulary in the moment.
 
-# LANGUAGE
-- Speak ${lang.name} at all times, with ${lang.accent}.
-- Give short explanations of corrections in ${explainLang}.
-- If the student speaks Spanish because they don't know a word, tell them the word in ${lang.name}, have them say it, and continue.
-- If the student explicitly asks for an explanation in Spanish, give it briefly in Spanish, then return to ${lang.name}.
+${languageSection}
 
 # LEVEL
 ${LEVEL_GUIDE[level] || LEVEL_GUIDE.auto}

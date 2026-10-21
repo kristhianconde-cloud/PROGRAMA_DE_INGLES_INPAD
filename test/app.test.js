@@ -7,11 +7,13 @@ import {
   PLACEMENT_TOOL,
   LEVEL_EXAM_TOOL,
   LEVEL_ORDER,
+  STUDY_PLAN,
   getNextLevel,
   getLevelTitle,
   getRandomExamScenario,
   buildLevelExamPrompt
 } from '../src/prompts/teacher.js';
+import { isLevelUnlocked, getHighestUnlockedLevel, getUnlockedLevels } from '../src/lib/storage.js';
 import { getTopic, TOPICS } from '../src/data/topics.js';
 import { highlight, formatDuration } from '../src/lib/ui.js';
 
@@ -147,4 +149,52 @@ describe('Dynamic Level-Up Exams & Grading (Vigesimal 0-20)', () => {
     expect(prompt).toContain('Checking in at Hotel');
   });
 });
+
+describe('Level 0 (A0) Bilingual Pedagogy', () => {
+  it('generates a 100% bilingual (Spanish + English) prompt for level zero', () => {
+    const prompt = buildTeacherPrompt({
+      language: 'en',
+      level: 'zero',
+      studentName: 'Kristhian',
+    });
+
+    expect(prompt).toContain('BILINGUAL (SPANISH + ENGLISH)');
+    expect(prompt).toContain('YOUR PRIMARY SPOKEN LANGUAGE FOR GUIDANCE, EXPLANATIONS AND ENCOURAGEMENT IS SPANISH');
+    expect(prompt).toContain('DO NOT speak fast, fluent or long paragraphs in English');
+    expect(prompt).toContain('Introduce ONE single word or short phrase at a time');
+    expect(prompt).not.toContain('Speak English at all times');
+  });
+});
+
+describe('Curricular Study Plan (CEFR A0 to C1)', () => {
+  it('contains structured learning objectives and grammar for all 6 levels', () => {
+    expect(STUDY_PLAN).toHaveLength(6);
+    const codes = STUDY_PLAN.map(p => p.id);
+    expect(codes).toEqual(['zero', 'A1', 'A2', 'B1', 'B2', 'C1']);
+
+    for (const plan of STUDY_PLAN) {
+      expect(plan.title).toBeTruthy();
+      expect(plan.subtitle).toBeTruthy();
+      expect(plan.description).toBeTruthy();
+      expect(plan.objectives.length).toBeGreaterThanOrEqual(3);
+      expect(plan.grammar).toBeTruthy();
+      expect(plan.examRequirement).toBeTruthy();
+    }
+  });
+});
+
+describe('Level Locking & Access Control', () => {
+  it('allows zero and auto by default, and locks higher levels without exam/diagnosis', () => {
+    // In node/vitest mock environment without diagnosis or exams:
+    expect(isLevelUnlocked('auto')).toBe(true);
+    expect(isLevelUnlocked('zero')).toBe(true);
+    expect(isLevelUnlocked('A1')).toBe(false);
+    expect(isLevelUnlocked('B2')).toBe(false);
+    expect(isLevelUnlocked('C1')).toBe(false);
+
+    expect(getHighestUnlockedLevel()).toBe('zero');
+    expect(getUnlockedLevels()).toEqual(['auto', 'zero']);
+  });
+});
+
 

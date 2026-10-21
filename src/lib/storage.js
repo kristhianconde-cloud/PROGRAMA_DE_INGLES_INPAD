@@ -1,7 +1,8 @@
-/** Almacenamiento local (en el dispositivo del alumno). Nada sale a ningún servidor propio. */
+import { LEVEL_ORDER } from '../prompts/teacher.js';
 
 const SETTINGS_KEY = 'pvi.settings';
 const HISTORY_KEY = 'pvi.history';
+const EXAM_HISTORY_KEY = 'pvi.exam_history';
 
 export const VOICES = [
   { id: 'Kore', label: 'Kore · femenina, firme' },
@@ -50,8 +51,6 @@ export function saveDiagnosedLevel(result) {
     level: result.level, // fija el nivel automáticamente para las próximas clases
   });
 }
-
-const EXAM_HISTORY_KEY = 'pvi.exam_history';
 
 export function getExamHistory() {
   try {
@@ -114,3 +113,52 @@ export function wordsToPractice(language, max = 12) {
   }
   return words;
 }
+
+/**
+ * Retorna el nivel más alto que el estudiante tiene desbloqueado actualmente.
+ * Si no tiene diagnóstico ni exámenes aprobados, inicia en 'zero' (A0).
+ */
+export function getHighestUnlockedLevel() {
+  const s = getSettings();
+  let maxIdx = 0; // 'zero' siempre está disponible
+
+  // Considerar nivel diagnosticado
+  if (s.diagnosedLevel && s.diagnosedLevel !== 'auto') {
+    const diagIdx = LEVEL_ORDER.indexOf(s.diagnosedLevel);
+    if (diagIdx > maxIdx) maxIdx = diagIdx;
+  }
+
+  // Considerar exámenes de ascenso aprobados (>= 15)
+  const exams = getExamHistory();
+  for (const ex of exams) {
+    if (ex.passed && ex.targetLevel) {
+      const exIdx = LEVEL_ORDER.indexOf(ex.targetLevel);
+      if (exIdx > maxIdx) maxIdx = exIdx;
+    }
+  }
+
+  return LEVEL_ORDER[maxIdx] || 'zero';
+}
+
+/**
+ * Retorna la lista de todos los IDs de nivel desbloqueados (incluyendo 'auto' para diagnóstico).
+ */
+export function getUnlockedLevels() {
+  const highest = getHighestUnlockedLevel();
+  const highestIdx = LEVEL_ORDER.indexOf(highest);
+  const unlocked = LEVEL_ORDER.slice(0, highestIdx + 1);
+  return ['auto', ...unlocked];
+}
+
+/**
+ * Comprueba si un nivel específico está desbloqueado para el alumno.
+ */
+export function isLevelUnlocked(levelId) {
+  if (levelId === 'auto') return true; // El diagnóstico oral siempre está disponible
+  const highest = getHighestUnlockedLevel();
+  const targetIdx = LEVEL_ORDER.indexOf(levelId);
+  const highestIdx = LEVEL_ORDER.indexOf(highest);
+  if (targetIdx === -1) return false;
+  return targetIdx <= highestIdx;
+}
+
