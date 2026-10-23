@@ -282,15 +282,39 @@ export function renderTalk(root) {
   let curUserBubble = null;
   let curTeacherBubble = null;
   let userIsScrolledUp = false;
+  let isUserTouching = false;
+  let scrollAnimFrame = null;
+
+  function checkScrollPosition() {
+    if (!chatFlow) return;
+    const distFromBottom = chatFlow.scrollHeight - chatFlow.scrollTop - chatFlow.clientHeight;
+    userIsScrolledUp = distFromBottom > 35;
+    if (btnScrollBottom) {
+      btnScrollBottom.hidden = !userIsScrolledUp;
+    }
+  }
 
   function scrollChatToBottom(force = false) {
     if (!chatFlow) return;
-    if (force || !userIsScrolledUp) {
+    if (force) {
+      userIsScrolledUp = false;
+      isUserTouching = false;
+      if (btnScrollBottom) btnScrollBottom.hidden = true;
       chatFlow.scrollTo({
         top: chatFlow.scrollHeight,
         behavior: 'smooth'
       });
-      if (btnScrollBottom) btnScrollBottom.hidden = true;
+      return;
+    }
+    if (isUserTouching || userIsScrolledUp) return;
+
+    if (!scrollAnimFrame) {
+      scrollAnimFrame = requestAnimationFrame(() => {
+        scrollAnimFrame = null;
+        if (!isUserTouching && !userIsScrolledUp && chatFlow) {
+          chatFlow.scrollTop = chatFlow.scrollHeight;
+        }
+      });
     }
   }
 
@@ -675,16 +699,29 @@ export function renderTalk(root) {
     });
   });
 
+  chatFlow?.addEventListener('touchstart', () => {
+    isUserTouching = true;
+  }, { passive: true });
+
+  chatFlow?.addEventListener('touchend', () => {
+    isUserTouching = false;
+    checkScrollPosition();
+  }, { passive: true });
+
+  chatFlow?.addEventListener('touchcancel', () => {
+    isUserTouching = false;
+    checkScrollPosition();
+  }, { passive: true });
+
+  chatFlow?.addEventListener('wheel', () => {
+    checkScrollPosition();
+  }, { passive: true });
+
   chatFlow?.addEventListener('scroll', () => {
-    const distFromBottom = chatFlow.scrollHeight - chatFlow.scrollTop - chatFlow.clientHeight;
-    userIsScrolledUp = distFromBottom > 80;
-    if (btnScrollBottom) {
-      btnScrollBottom.hidden = !userIsScrolledUp;
-    }
-  });
+    checkScrollPosition();
+  }, { passive: true });
 
   btnScrollBottom?.addEventListener('click', () => {
-    userIsScrolledUp = false;
     scrollChatToBottom(true);
   });
 

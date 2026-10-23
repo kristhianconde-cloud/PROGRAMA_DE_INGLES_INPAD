@@ -566,11 +566,12 @@ input:focus, textarea:focus, select:focus {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 8px 4px 16px;
+  padding: 8px 6px 16px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   overscroll-behavior-y: contain;
 }
 .chat-flow::-webkit-scrollbar {
