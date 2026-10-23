@@ -142,19 +142,8 @@ export function renderTalk(root) {
 
       <button class="btn ghost small btn-scroll-bottom" id="btnScrollBottom" hidden>⬇️ Ver lo último</button>
 
-      <!-- Barra de controles y texto alternativo -->
+      <!-- Barra de controles de voz y ayudas rápidas -->
       <footer class="talk-footer">
-        <form class="text-input-form" id="textInputForm">
-          <input 
-            type="text" 
-            id="txtUserMessage" 
-            placeholder="💬 Escribe aquí si no puedes usar el micrófono..." 
-            autocomplete="off" 
-            maxlength="200" 
-          />
-          <button type="submit" class="btn primary small" id="btnSendText">Enviar</button>
-        </form>
-
         <div class="quick-helpers">
           <button class="chip ghost" data-help="suggestions">💡 ¿Qué digo?</button>
           <button class="chip ghost" data-help="slower">🐢 Más lento</button>
@@ -684,35 +673,6 @@ export function renderTalk(root) {
       client.sendText(helpMessage(kind));
       toast('Ayuda enviada a la profesora', 'info');
     });
-  });
-
-  const textInputForm = view.querySelector('#textInputForm');
-  const txtUserMessage = view.querySelector('#txtUserMessage');
-
-  textInputForm?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const val = txtUserMessage.value.trim();
-    if (!val) return;
-    if (!client || !client.ready) {
-      toast('Aún conectando con la profesora...', 'warning');
-      return;
-    }
-
-    clearSilenceTimers();
-    if (player && player.isPlaying) {
-      player.stop();
-      finalizeTurn('teacher');
-    }
-
-    finalizeTurn('user');
-    updateTranscript('user', val);
-    finalizeTurn('user');
-    scrollChatToBottom(true);
-
-    client.sendText(val);
-    txtUserMessage.value = '';
-    lblTeacherStatus.textContent = 'Tu profesora está procesando tu respuesta...';
-    startSilenceWatchdog();
   });
 
   chatFlow?.addEventListener('scroll', () => {
